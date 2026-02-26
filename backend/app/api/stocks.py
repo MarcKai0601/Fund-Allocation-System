@@ -10,6 +10,14 @@ from app.core.redis_client import get_stock_list_cache
 router = APIRouter(prefix="/api/stocks", tags=["Stocks"])
 
 
+@router.post("/sync", summary="手動觸發台股資料同步")
+def trigger_sync():
+    """強制重新從 TWSE/TPEx 公開 API 同步股票清單（不受 24h 限制）。"""
+    from app.tasks.stock_sync import sync_stock_master
+    count = sync_stock_master()
+    return {"status": "ok", "synced": count}
+
+
 @router.get("/search", response_model=list[StockMasterOut], summary="搜尋台股（autocomplete）")
 def search_stocks(
     q: Optional[str] = Query(None, min_length=1, description="股票代號或名稱關鍵字"),
