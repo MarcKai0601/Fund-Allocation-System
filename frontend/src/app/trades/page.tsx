@@ -71,9 +71,18 @@ export default function TradesPage() {
         }, 300);
     };
 
-    const selectStock = (s: StockMaster) => {
-        setForm(f => ({ ...f, symbol: s.symbol, symbolDisplay: `${s.symbol} ${s.name}` }));
+    const selectStock = async (s: StockMaster) => {
+        setForm(f => ({ ...f, symbol: s.symbol, symbolDisplay: `${s.symbol} ${s.name}`, price: "" }));
         setShowSuggestions(false);
+        // Auto-fill today's real-time price
+        try {
+            const res = await stocksApi.getQuote(s.symbol);
+            if (res.data?.price) {
+                setForm(f => ({ ...f, price: String(res.data.price) }));
+            }
+        } catch {
+            // Fugle API key may not be set — silently ignore, user can type price manually
+        }
     };
 
     const handleSubmit = async () => {
@@ -188,7 +197,9 @@ export default function TradesPage() {
                                     <Input type="number" placeholder="1000" value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} className="bg-gray-800 border-gray-700 text-white" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-gray-300">手續費</Label>
+                                    <Label className="text-gray-300">
+                                        手續費 <span className="text-gray-500 text-xs font-normal">*非必填</span>
+                                    </Label>
                                     <Input type="number" placeholder="0" value={form.fee} onChange={e => setForm(f => ({ ...f, fee: e.target.value }))} className="bg-gray-800 border-gray-700 text-white" />
                                 </div>
                                 <div className="space-y-2">
@@ -246,6 +257,7 @@ export default function TradesPage() {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-gray-800 text-gray-400 text-xs">
+                                        <th className="text-left p-4 font-medium w-12">#ID</th>
                                         <th className="text-left p-4 font-medium">股票</th>
                                         <th className="text-center p-4 font-medium">方向</th>
                                         <th className="text-right p-4 font-medium">成交價</th>
@@ -263,6 +275,7 @@ export default function TradesPage() {
                                         const pnlPos = (t.pnl ?? 0) >= 0;
                                         return (
                                             <tr key={t.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
+                                                <td className="p-4 text-gray-500 text-xs font-mono w-12">#{t.id}</td>
                                                 <td className="p-4">
                                                     <span className="font-semibold text-white">{t.symbol}</span>
                                                     {t.note && <p className="text-gray-500 text-xs mt-0.5">{t.note}</p>}

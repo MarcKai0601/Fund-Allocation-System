@@ -12,6 +12,7 @@ from app.models import account, fund_ledger, stock_master, transaction, position
 
 from app.api import funds, trades, portfolio, stocks
 from app.tasks.stock_sync import sync_stock_master, should_sync
+from app.core.config import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,13 +41,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Fund Allocation System API",
     description="代操投資資金與台股績效管理系統",
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

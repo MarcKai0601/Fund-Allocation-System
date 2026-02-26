@@ -102,6 +102,8 @@ export const portfolioApi = {
 export const stocksApi = {
   search: (q: string) =>
     api.get<StockMaster[]>("/api/stocks/search", { params: { q } }),
+  getQuote: (symbol: string) =>
+    api.get<{ symbol: string; price: number; change_pct: number | null; name: string | null }>(`/api/stocks/quote/${symbol}`),
 };
 
 // ─── Formatters ──────────────────────────────────────────────────────────────

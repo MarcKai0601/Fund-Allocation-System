@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
 
@@ -34,3 +34,22 @@ def search_stocks(
         .all()
     )
     return stocks
+
+
+@router.get("/quote/{symbol}", summary="取得單一股票即時報價")
+def get_quote(symbol: str, db: Session = Depends(get_db)):
+    """
+    回傳指定股票的即時報價（優先讀 Redis 快取，再呼叫 Fugle API）。
+    用於新增交易時自動帶入當日成交價。
+    """
+    from app.services.quote_service import _fetch_quote
+    data = _fetch_quote(symbol.upper())
+    if data is None:
+        # 若 Fugle 無資料或 Key 未設定，回傳 404（前端降級為空白輸入）
+        raise HTTPException(status_code=404, detail=f"無法取得 {symbol} 即時報價，請確認 FUGLE_API_KEY 是否設定。")
+    return {
+        "symbol": symbol.upper(),
+        "price": data["price"],
+        "change_pct": data.get("change_pct"),
+        "name": data.get("name"),
+    }

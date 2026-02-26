@@ -1,9 +1,11 @@
 @import "tailwindcss";
 
-@theme {
+/* ── Dark theme (default) ─────────────────────────────── */
+:root,
+.dark {
   --color-background: oklch(0.13 0.028 264);
   --color-foreground: oklch(0.97 0.003 264);
-  --color-card: oklch(0.13 0.028 264);
+  --color-card: oklch(0.16 0.025 264);
   --color-card-foreground: oklch(0.97 0.003 264);
   --color-border: oklch(0.28 0.022 264);
   --color-input: oklch(0.28 0.022 264);
@@ -17,32 +19,137 @@
   --color-destructive-foreground: oklch(0.97 0.003 264);
   --color-ring: oklch(0.55 0.18 142);
   --radius: 0.5rem;
+
+  --sidebar-bg: #030712;
+  --sidebar-border: #1f2937;
+  --sidebar-text: #9ca3af;
+  --sidebar-hover-bg: #1f2937;
+  --sidebar-hover-text: #ffffff;
+  --sidebar-active-bg: rgba(16, 185, 129, 0.1);
+  --sidebar-active-text: #34d399;
+  --body-bg: #030712;
+  --body-text: #f9fafb;
+  --card-bg: #111827;
+  --card-border: #1f2937;
+  --input-bg: #1f2937;
+  --input-border: #374151;
+  --table-row-hover: rgba(31, 41, 55, 0.3);
+  --table-row-border: rgba(31, 41, 55, 0.5);
+  --scrollbar-track: #111827;
+  --scrollbar-thumb: #374151;
+  --scrollbar-thumb-hover: #4b5563;
 }
 
+/* ── Light theme ──────────────────────────────────────── */
+.light {
+  --color-background: oklch(0.98 0.005 264);
+  --color-foreground: oklch(0.15 0.03 264);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.15 0.03 264);
+  --color-border: oklch(0.88 0.012 264);
+  --color-input: oklch(0.88 0.012 264);
+  --color-primary: oklch(0.5 0.18 142);
+  --color-primary-foreground: oklch(0.98 0.002 142);
+  --color-muted: oklch(0.94 0.008 264);
+  --color-muted-foreground: oklch(0.48 0.02 264);
+  --color-accent: oklch(0.94 0.008 264);
+  --color-accent-foreground: oklch(0.15 0.03 264);
+  --color-destructive: oklch(0.52 0.22 25);
+  --color-destructive-foreground: oklch(0.98 0.002 264);
+  --color-ring: oklch(0.5 0.18 142);
+
+  --sidebar-bg: #f8fafc;
+  --sidebar-border: #e2e8f0;
+  --sidebar-text: #64748b;
+  --sidebar-hover-bg: #f1f5f9;
+  --sidebar-hover-text: #1e293b;
+  --sidebar-active-bg: rgba(16, 185, 129, 0.1);
+  --sidebar-active-text: #059669;
+  --body-bg: #f1f5f9;
+  --body-text: #1e293b;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --input-bg: #f8fafc;
+  --input-border: #cbd5e1;
+  --table-row-hover: rgba(241, 245, 249, 0.8);
+  --table-row-border: rgba(226, 232, 240, 0.8);
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+}
+
+/* ── Font size scales ─────────────────────────────────── */
+html[data-font="md"] { font-size: 16px; }
+html[data-font="lg"] { font-size: 18px; }
+html[data-font="xl"] { font-size: 20px; }
+
+/* ── Base styles ──────────────────────────────────────── */
 * {
-  border-color: oklch(0.28 0.022 264);
+  border-color: var(--card-border);
 }
 
 body {
-  background-color: oklch(0.13 0.028 264);
-  color: oklch(0.97 0.003 264);
+  background-color: var(--body-bg);
+  color: var(--body-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Scrollbar styling */
+/* ── Sidebar ──────────────────────────────────────────── */
+aside {
+  background-color: var(--sidebar-bg) !important;
+  border-color: var(--sidebar-border) !important;
+}
+
+/* ── Cards ────────────────────────────────────────────── */
+.light [class*="bg-gray-900"] {
+  background-color: var(--card-bg) !important;
+}
+.light [class*="bg-gray-950"] {
+  background-color: var(--body-bg) !important;
+}
+.light [class*="border-gray-800"] {
+  border-color: var(--card-border) !important;
+}
+.light [class*="border-gray-700"] {
+  border-color: var(--input-border) !important;
+}
+.light [class*="bg-gray-800"] {
+  background-color: var(--input-bg) !important;
+}
+.light [class*="text-white"] {
+  color: #1e293b !important;
+}
+.light [class*="text-gray-100"] {
+  color: #334155 !important;
+}
+.light [class*="text-gray-300"] {
+  color: #475569 !important;
+}
+.light [class*="text-gray-400"] {
+  color: #64748b !important;
+}
+.light [class*="text-gray-500"] {
+  color: #94a3b8 !important;
+}
+.light [class*="text-gray-600"] {
+  color: #cbd5e1 !important;
+}
+
+/* ── Scrollbar styling ────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #111827;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: var(--scrollbar-thumb-hover);
 }

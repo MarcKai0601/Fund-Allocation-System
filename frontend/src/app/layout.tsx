@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -13,15 +14,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-TW" className="dark">
-      <body className={`${inter.className} bg-gray-950 text-gray-100 min-h-screen`}>
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <main className="flex-1 p-8 overflow-auto">
-            {children}
-          </main>
-        </div>
-        <Toaster theme="dark" />
+    <html lang="zh-TW" suppressHydrationWarning data-font="md">
+      <body className={`${inter.className} min-h-screen`} style={{ backgroundColor: "var(--body-bg)", color: "var(--body-text)" }}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+          disableTransitionOnChange={false}
+        >
+          <div className="flex min-h-screen">
+            <Sidebar />
+            <main className="flex-1 p-8 overflow-auto">
+              {children}
+            </main>
+          </div>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
