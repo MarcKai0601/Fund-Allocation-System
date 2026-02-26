@@ -372,9 +372,9 @@ _POPULAR_STOCKS = [
 
 def _fetch_twse_stocks() -> list[dict]:
     """從 TWSE 公開 API 取得完整上市股票清單"""
-    url = "https://openapi.twse.com.tw/v1/exchangeReport/listOfSecurities"
+    url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
     try:
-        resp = httpx.get(url, timeout=15)
+        resp = httpx.get(url, timeout=15, follow_redirects=True)
         resp.raise_for_status()
         data = resp.json()
         results = []
@@ -382,7 +382,7 @@ def _fetch_twse_stocks() -> list[dict]:
             symbol = item.get("Code", "").strip()
             name = item.get("Name", "").strip()
             if symbol and name:
-                results.append({"symbol": symbol, "name": name, "sector": item.get("IndustryCode"), "market": "TWSE"})
+                results.append({"symbol": symbol, "name": name, "sector": None, "market": "TWSE"})
         logger.info(f"TWSE API returned {len(results)} stocks")
         return results
     except Exception as e:
