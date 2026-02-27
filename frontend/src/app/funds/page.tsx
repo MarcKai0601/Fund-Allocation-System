@@ -25,8 +25,8 @@ export default function FundsPage() {
     const [depositOpen, setDepositOpen] = useState(false);
     const [initOpen, setInitOpen] = useState(false);
 
-    const [depositForm, setDepositForm] = useState({ amount: "", note: "", trade_date: new Date().toISOString().slice(0, 10) });
-    const [initForm, setInitForm] = useState({ amount: "", note: "", trade_date: new Date().toISOString().slice(0, 10) });
+    const [depositForm, setDepositForm] = useState({ amount: "", note: "", trade_date: "" });
+    const [initForm, setInitForm] = useState({ amount: "", note: "", trade_date: "" });
     const [submitting, setSubmitting] = useState(false);
 
     const load = useCallback(async () => {
@@ -40,6 +40,13 @@ export default function FundsPage() {
     }, []);
 
     useEffect(() => { load(); }, [load]);
+
+    // Hydration-safe: 在 client mount 後才設定今天日期，避免 SSR/CSR 不一致
+    useEffect(() => {
+        const today = new Date().toISOString().slice(0, 10);
+        setDepositForm(f => ({ ...f, trade_date: f.trade_date || today }));
+        setInitForm(f => ({ ...f, trade_date: f.trade_date || today }));
+    }, []);
 
     const handleInit = async () => {
         if (!initForm.amount) return;
@@ -63,7 +70,7 @@ export default function FundsPage() {
             await fundsApi.deposit({ amount: Number(depositForm.amount), note: depositForm.note, trade_date: depositForm.trade_date });
             toast.success("增資成功！");
             setDepositOpen(false);
-            setDepositForm({ amount: "", note: "", trade_date: new Date().toISOString().slice(0, 10) });
+            setDepositForm({ amount: "", note: "", trade_date: new Date().toISOString().slice(0, 10) }); // client-only: 此處已在 useEffect callback 中，安全
             load();
         } catch (e: any) {
             toast.error(e?.response?.data?.detail ?? "增資失敗");

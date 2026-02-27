@@ -19,7 +19,7 @@ const defaultForm = () => ({
     price: "",
     quantity: "",
     fee: "",
-    trade_date: new Date().toISOString().slice(0, 10),
+    trade_date: "",
     note: "",
 });
 
@@ -47,6 +47,11 @@ export default function TradesPage() {
     }, []);
 
     useEffect(() => { load(); }, [load]);
+
+    // Hydration-safe: 在 client mount 後才設定今天日期，避免 SSR/CSR 不一致
+    useEffect(() => {
+        setForm(f => ({ ...f, trade_date: f.trade_date || new Date().toISOString().slice(0, 10) }));
+    }, []);
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
