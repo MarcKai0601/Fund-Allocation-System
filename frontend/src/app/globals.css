@@ -100,7 +100,7 @@ aside {
   border-color: var(--sidebar-border) !important;
 }
 
-/* ── Cards ────────────────────────────────────────────── */
+/* ── Light mode overrides ────────────────────────────── */
 .light [class*="bg-gray-900"] {
   background-color: var(--card-bg) !important;
 }
@@ -116,9 +116,22 @@ aside {
 .light [class*="bg-gray-800"] {
   background-color: var(--input-bg) !important;
 }
-.light [class*="text-white"] {
+
+/* 淺色模式文字：只修正沒有帶色彩 class 的 text-white
+   帶 bg-emerald / bg-violet / bg-red 的按鈕上保留白色 */
+.light [class*="text-white"]:not([class*="bg-emerald"]):not([class*="bg-violet"]):not([class*="bg-red"]) {
   color: #1e293b !important;
 }
+/* 保證有色按鈕 text-white 不被覆蓋 */
+.light [class*="bg-emerald"] [class*="text-white"],
+.light [class*="bg-violet"] [class*="text-white"],
+.light [class*="bg-red"] [class*="text-white"],
+.light [class*="bg-emerald"][class*="text-white"],
+.light [class*="bg-violet"][class*="text-white"],
+.light [class*="bg-red"][class*="text-white"] {
+  color: #ffffff !important;
+}
+
 .light [class*="text-gray-100"] {
   color: #334155 !important;
 }
@@ -133,6 +146,34 @@ aside {
 }
 .light [class*="text-gray-600"] {
   color: #cbd5e1 !important;
+}
+
+/* Dialog 淺色模式 — 確保 dialog 背景和文字正確 */
+.light [data-slot="dialog-content"] {
+  background-color: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+  color: var(--body-text) !important;
+}
+.light [data-slot="dialog-content"] [data-slot="dialog-title"] {
+  color: var(--body-text) !important;
+}
+.light [data-slot="dialog-content"] input {
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--body-text) !important;
+}
+.light [data-slot="dialog-content"] label {
+  color: var(--sidebar-text) !important;
+}
+
+/* ── 隱藏 number input 的 spinner ─────────────────────── */
+input.no-spinner::-webkit-outer-spin-button,
+input.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input.no-spinner[type="number"] {
+  -moz-appearance: textfield;
 }
 
 /* ── Scrollbar styling ────────────────────────────────── */

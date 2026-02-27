@@ -139,7 +139,7 @@ export default function Sidebar() {
                 </div>
 
                 <p className="text-xs" style={{ color: "var(--sidebar-text)", opacity: 0.6 }}>
-                    台股代操管理平台 v1.1.0
+                    台股代操管理平台 v2.0.0
                 </p>
             </div>
         </aside>

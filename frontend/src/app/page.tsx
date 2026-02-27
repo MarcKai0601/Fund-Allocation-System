@@ -31,13 +31,11 @@ export default function DashboardPage() {
   }, [load]);
 
   const account = data?.account;
-  const totalAssets =
-    (account?.available_funds ?? 0) + (data?.total_market_value ?? 0);
 
   const stats = [
     {
-      label: "總資產",
-      value: fmt.currency(totalAssets),
+      label: "投入資金",
+      value: fmt.currency(account?.total_deposited),
       icon: DollarSign,
       color: "text-sky-400",
       bg: "bg-sky-400/10",
@@ -69,6 +67,9 @@ export default function DashboardPage() {
     {
       label: "已實現損益",
       value: fmt.currency(account?.realized_pnl),
+      sub: account?.realized_pnl != null && account?.total_deposited
+        ? fmt.pct((account.realized_pnl / account.total_deposited) * 100)
+        : undefined,
       icon: account?.realized_pnl != null && account.realized_pnl >= 0 ? TrendingUp : TrendingDown,
       color:
         (account?.realized_pnl ?? 0) >= 0 ? "text-emerald-400" : "text-red-400",
@@ -88,9 +89,9 @@ export default function DashboardPage() {
   if (!account?.is_initialized) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <Wallet className="w-16 h-16 text-gray-600" />
-        <h2 className="text-xl font-semibold text-gray-300">尚未初始化資金</h2>
-        <p className="text-gray-500">請前往「資金管理」設定初始代操金額</p>
+        <Wallet className="w-16 h-16" style={{ color: "var(--sidebar-text)" }} />
+        <h2 className="text-xl font-semibold" style={{ color: "var(--body-text)" }}>尚未初始化資金</h2>
+        <p style={{ color: "var(--sidebar-text)" }}>請前往「資金管理」設定初始代操金額</p>
       </div>
     );
   }
@@ -100,12 +101,12 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">總覽 Dashboard</h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <h1 className="text-2xl font-bold" style={{ color: "var(--body-text)" }}>總覽 Dashboard</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--sidebar-text)" }}>
             即時損益追蹤｜每 60 秒自動更新
           </p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-gray-500">
+        <div className="flex items-center gap-3 text-xs" style={{ color: "var(--sidebar-text)" }}>
           <RefreshCw className="w-3 h-3" />
           上次更新：{lastUpdated?.toLocaleTimeString("zh-TW") ?? "—"}
         </div>
@@ -114,44 +115,44 @@ export default function DashboardPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
         {stats.map((s) => (
-          <Card key={s.label} className="bg-gray-900 border-gray-800">
+          <Card key={s.label} style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-3">
-                <p className="text-gray-400 text-xs font-medium">{s.label}</p>
+                <p className="text-xs font-medium" style={{ color: "var(--sidebar-text)" }}>{s.label}</p>
                 <div className={cn("p-1.5 rounded-lg", s.bg)}>
                   <s.icon className={cn("w-4 h-4", s.color)} />
                 </div>
               </div>
               <p className={cn("text-lg font-bold", s.color)}>{s.value}</p>
-              {s.sub && <p className="text-xs text-gray-500 mt-1">{s.sub}</p>}
+              {s.sub && <p className="text-xs mt-1" style={{ color: "var(--sidebar-text)" }}>{s.sub}</p>}
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Holdings Table */}
-      <Card className="bg-gray-900 border-gray-800">
+      <Card style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold text-white">
+          <CardTitle className="text-base font-semibold" style={{ color: "var(--body-text)" }}>
             持股庫存
           </CardTitle>
         </CardHeader>
         <CardContent>
           {data?.positions.length === 0 ? (
-            <p className="text-gray-500 text-sm py-8 text-center">目前無持倉</p>
+            <p className="text-sm py-8 text-center" style={{ color: "var(--sidebar-text)" }}>目前無持倉</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-800 text-gray-400 text-xs">
-                    <th className="text-left pb-3 font-medium">股票</th>
-                    <th className="text-right pb-3 font-medium">庫存(股)</th>
-                    <th className="text-right pb-3 font-medium">平均成本</th>
-                    <th className="text-right pb-3 font-medium">現價</th>
-                    <th className="text-right pb-3 font-medium">今日漲跌</th>
-                    <th className="text-right pb-3 font-medium">市值</th>
-                    <th className="text-right pb-3 font-medium">未實現損益</th>
-                    <th className="text-right pb-3 font-medium">報酬率</th>
+                  <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
+                    <th className="text-left pb-3 font-medium text-xs" style={{ color: "var(--sidebar-text)" }}>股票</th>
+                    <th className="text-right pb-3 font-medium text-xs" style={{ color: "var(--sidebar-text)" }}>庫存(股)</th>
+                    <th className="text-right pb-3 font-medium text-xs" style={{ color: "var(--sidebar-text)" }}>平均成本</th>
+                    <th className="text-right pb-3 font-medium text-xs" style={{ color: "var(--sidebar-text)" }}>現價</th>
+                    <th className="text-right pb-3 font-medium text-xs" style={{ color: "var(--sidebar-text)" }}>今日漲跌</th>
+                    <th className="text-right pb-3 font-medium text-xs" style={{ color: "var(--sidebar-text)" }}>市值</th>
+                    <th className="text-right pb-3 font-medium text-xs" style={{ color: "var(--sidebar-text)" }}>未實現損益</th>
+                    <th className="text-right pb-3 font-medium text-xs" style={{ color: "var(--sidebar-text)" }}>報酬率</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -159,22 +160,25 @@ export default function DashboardPage() {
                     const pnlPositive = (p.unrealized_pnl ?? 0) >= 0;
                     const changePositive = (p.change_pct ?? 0) >= 0;
                     return (
-                      <tr key={p.symbol} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
+                      <tr key={p.symbol} className="transition-colors" style={{ borderBottom: "1px solid var(--table-row-border)" }}
+                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--table-row-hover)")}
+                        onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+                      >
                         <td className="py-3">
                           <div>
-                            <p className="font-medium text-white">{p.symbol}</p>
-                            <p className="text-gray-500 text-xs">{p.name ?? "—"}</p>
+                            <p className="font-medium" style={{ color: "var(--body-text)" }}>{p.symbol}</p>
+                            <p className="text-xs" style={{ color: "var(--sidebar-text)" }}>{p.name ?? "—"}</p>
                           </div>
                         </td>
-                        <td className="py-3 text-right text-gray-300">{p.quantity.toLocaleString()}</td>
-                        <td className="py-3 text-right text-gray-300">{fmt.currency(p.avg_cost)}</td>
-                        <td className="py-3 text-right font-medium text-white">
-                          {p.current_price != null ? fmt.currency(p.current_price) : <span className="text-gray-600">—</span>}
+                        <td className="py-3 text-right" style={{ color: "var(--sidebar-text)" }}>{p.quantity.toLocaleString()}</td>
+                        <td className="py-3 text-right" style={{ color: "var(--sidebar-text)" }}>{fmt.currency(p.avg_cost)}</td>
+                        <td className="py-3 text-right font-medium" style={{ color: "var(--body-text)" }}>
+                          {p.current_price != null ? fmt.currency(p.current_price) : <span style={{ color: "var(--sidebar-text)" }}>—</span>}
                         </td>
                         <td className={cn("py-3 text-right font-medium", changePositive ? "text-emerald-400" : "text-red-400")}>
                           {fmt.pct(p.change_pct)}
                         </td>
-                        <td className="py-3 text-right text-gray-300">{fmt.currency(p.market_value)}</td>
+                        <td className="py-3 text-right" style={{ color: "var(--sidebar-text)" }}>{fmt.currency(p.market_value)}</td>
                         <td className={cn("py-3 text-right font-semibold", pnlPositive ? "text-emerald-400" : "text-red-400")}>
                           {fmt.currency(p.unrealized_pnl)}
                         </td>
