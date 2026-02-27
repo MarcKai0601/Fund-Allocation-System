@@ -1,29 +1,29 @@
 from decimal import Decimal
-from datetime import date
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
-from app.models.account import Account
+from app.models.portfolio import Portfolio
 from app.models.fund_ledger import FundLedger, LedgerType
 from app.schemas.schemas import FundInitRequest, FundDepositRequest
 
 
-def _get_account(db: Session) -> Account:
-    acct = db.query(Account).filter(Account.id == 1).first()
-    if not acct:
-        raise HTTPException(status_code=500, detail="Account row missing, re-run init.sql")
-    return acct
+def _get_portfolio(db: Session, portfolio_id: int) -> Portfolio:
+    p = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Portfolio not found")
+    return p
 
 
-def init_fund(db: Session, req: FundInitRequest) -> Account:
-    acct = _get_account(db)
-    if acct.is_initialized:
+def init_fund(db: Session, portfolio_id: int, req: FundInitRequest) -> Portfolio:
+    p = _get_portfolio(db, portfolio_id)
+    if p.is_initialized:
         raise HTTPException(
             status_code=400,
-            detail="初始資金已設定，無法重複初始化。如需增資請使用 /api/funds/deposit"
+            detail="初始資金已設定，無法重複初始化。如需增資請使用增資 API"
         )
 
     ledger = FundLedger(
+        portfolio_id=portfolio_id,
         type=LedgerType.INIT,
         amount=req.amount,
         note=req.note,
@@ -31,20 +31,21 @@ def init_fund(db: Session, req: FundInitRequest) -> Account:
     )
     db.add(ledger)
 
-    acct.total_deposited = req.amount
-    acct.available_funds = req.amount
-    acct.is_initialized = 1
+    p.total_deposited = req.amount
+    p.available_funds = req.amount
+    p.is_initialized = 1
     db.commit()
-    db.refresh(acct)
-    return acct
+    db.refresh(p)
+    return p
 
 
-def deposit_fund(db: Session, req: FundDepositRequest) -> Account:
-    acct = _get_account(db)
-    if not acct.is_initialized:
-        raise HTTPException(status_code=400, detail="請先初始化資金 /api/funds/init")
+def deposit_fund(db: Session, portfolio_id: int, req: FundDepositRequest) -> Portfolio:
+    p = _get_portfolio(db, portfolio_id)
+    if not p.is_initialized:
+        raise HTTPException(status_code=400, detail="請先初始化資金")
 
     ledger = FundLedger(
+        portfolio_id=portfolio_id,
         type=LedgerType.DEPOSIT,
         amount=req.amount,
         note=req.note,
@@ -52,12 +53,17 @@ def deposit_fund(db: Session, req: FundDepositRequest) -> Account:
     )
     db.add(ledger)
 
-    acct.total_deposited = Decimal(str(acct.total_deposited)) + req.amount
-    acct.available_funds = Decimal(str(acct.available_funds)) + req.amount
+    p.total_deposited = Decimal(str(p.total_deposited)) + req.amount
+    p.available_funds = Decimal(str(p.available_funds)) + req.amount
     db.commit()
-    db.refresh(acct)
-    return acct
+    db.refresh(p)
+    return p
 
 
-def get_ledger(db: Session) -> list[FundLedger]:
-    return db.query(FundLedger).order_by(FundLedger.id.desc()).all()
+def get_ledger(db: Session, portfolio_id: int) -> list[FundLedger]:
+    return (
+        db.query(FundLedger)
+        .filter(FundLedger.portfolio_id == portfolio_id)
+        .order_by(FundLedger.id.desc())
+        .all()
+    )

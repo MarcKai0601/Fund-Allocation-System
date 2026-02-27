@@ -5,6 +5,26 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+# ─── Portfolio ───────────────────────────────────────────────────────────────
+
+class PortfolioCreateRequest(BaseModel):
+    name: str = Field(..., max_length=100, description="代操帳戶名稱")
+
+
+class PortfolioOut(BaseModel):
+    id: int
+    owner_user_id: str
+    name: str
+    available_funds: Decimal
+    total_invested: Decimal
+    total_deposited: Decimal
+    realized_pnl: Decimal
+    is_initialized: bool
+
+    class Config:
+        from_attributes = True
+
+
 # ─── Fund ───────────────────────────────────────────────────────────────────
 
 class FundInitRequest(BaseModel):
@@ -26,18 +46,6 @@ class FundLedgerOut(BaseModel):
     note: Optional[str]
     trade_date: date
     created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class AccountOut(BaseModel):
-    id: int
-    available_funds: Decimal
-    total_invested: Decimal
-    total_deposited: Decimal
-    realized_pnl: Decimal
-    is_initialized: bool
 
     class Config:
         from_attributes = True
@@ -86,7 +94,7 @@ class TransactionOut(BaseModel):
         from_attributes = True
 
 
-# ─── Portfolio ───────────────────────────────────────────────────────────────
+# ─── Portfolio Overview (with positions) ─────────────────────────────────────
 
 class PositionOut(BaseModel):
     symbol: str
@@ -104,8 +112,8 @@ class PositionOut(BaseModel):
         from_attributes = True
 
 
-class PortfolioOut(BaseModel):
-    account: AccountOut
+class PortfolioOverviewOut(BaseModel):
+    portfolio: PortfolioOut
     positions: list[PositionOut]
     total_market_value: Decimal
     total_unrealized_pnl: Decimal

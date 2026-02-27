@@ -2,42 +2,43 @@ from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
-from app.models.account import Account
+from app.models.portfolio import Portfolio
 from app.models.transaction import Transaction, ActionType
 from app.models.position import Position
 from app.models.fifo_lot import FifoLot
 from app.schemas.schemas import TradeRequest
 
 
-def _get_account(db: Session) -> Account:
-    acct = db.query(Account).filter(Account.id == 1).first()
-    if not acct:
-        raise HTTPException(status_code=500, detail="Account not found")
-    return acct
+def _get_portfolio(db: Session, portfolio_id: int) -> Portfolio:
+    p = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Portfolio not found")
+    return p
 
 
-def create_trade(db: Session, req: TradeRequest) -> Transaction:
-    acct = _get_account(db)
-    if not acct.is_initialized:
+def create_trade(db: Session, portfolio_id: int, req: TradeRequest) -> Transaction:
+    p = _get_portfolio(db, portfolio_id)
+    if not p.is_initialized:
         raise HTTPException(status_code=400, detail="請先初始化資金")
 
     if req.action == "BUY":
-        return _process_buy(db, acct, req)
+        return _process_buy(db, p, portfolio_id, req)
     else:
-        return _process_sell(db, acct, req)
+        return _process_sell(db, p, portfolio_id, req)
 
 
-def _process_buy(db: Session, acct: Account, req: TradeRequest) -> Transaction:
+def _process_buy(db: Session, p: Portfolio, portfolio_id: int, req: TradeRequest) -> Transaction:
     total_cost = Decimal(str(req.price)) * req.quantity + Decimal(str(req.fee))
 
-    if Decimal(str(acct.available_funds)) < total_cost:
+    if Decimal(str(p.available_funds)) < total_cost:
         raise HTTPException(
             status_code=400,
-            detail=f"可用資金不足。可用: {acct.available_funds}, 需要: {total_cost}"
+            detail=f"可用資金不足。可用: {p.available_funds}, 需要: {total_cost}"
         )
 
     # Create transaction record
     tx = Transaction(
+        portfolio_id=portfolio_id,
         symbol=req.symbol,
         action=ActionType.BUY,
         price=req.price,
@@ -52,6 +53,7 @@ def _process_buy(db: Session, acct: Account, req: TradeRequest) -> Transaction:
 
     # Add FIFO lot
     lot = FifoLot(
+        portfolio_id=portfolio_id,
         symbol=req.symbol,
         transaction_id=tx.id,
         price=req.price,
@@ -62,7 +64,11 @@ def _process_buy(db: Session, acct: Account, req: TradeRequest) -> Transaction:
     db.add(lot)
 
     # Update or create position (average cost)
-    position = db.query(Position).filter(Position.symbol == req.symbol).first()
+    position = (
+        db.query(Position)
+        .filter(Position.portfolio_id == portfolio_id, Position.symbol == req.symbol)
+        .first()
+    )
     if position:
         old_total = Decimal(str(position.avg_cost)) * position.quantity
         new_total = old_total + Decimal(str(req.price)) * req.quantity
@@ -72,6 +78,7 @@ def _process_buy(db: Session, acct: Account, req: TradeRequest) -> Transaction:
         position.total_cost = Decimal(str(position.total_cost)) + total_cost
     else:
         position = Position(
+            portfolio_id=portfolio_id,
             symbol=req.symbol,
             quantity=req.quantity,
             avg_cost=req.price,
@@ -81,10 +88,10 @@ def _process_buy(db: Session, acct: Account, req: TradeRequest) -> Transaction:
         db.add(position)
 
     # Deduct from available funds
-    acct.available_funds = (Decimal(str(acct.available_funds)) - total_cost).quantize(
+    p.available_funds = (Decimal(str(p.available_funds)) - total_cost).quantize(
         Decimal("0.0001"), rounding=ROUND_HALF_UP
     )
-    acct.total_invested = (Decimal(str(acct.total_invested)) + total_cost).quantize(
+    p.total_invested = (Decimal(str(p.total_invested)) + total_cost).quantize(
         Decimal("0.0001"), rounding=ROUND_HALF_UP
     )
 
@@ -93,8 +100,12 @@ def _process_buy(db: Session, acct: Account, req: TradeRequest) -> Transaction:
     return tx
 
 
-def _process_sell(db: Session, acct: Account, req: TradeRequest) -> Transaction:
-    position = db.query(Position).filter(Position.symbol == req.symbol).first()
+def _process_sell(db: Session, p: Portfolio, portfolio_id: int, req: TradeRequest) -> Transaction:
+    position = (
+        db.query(Position)
+        .filter(Position.portfolio_id == portfolio_id, Position.symbol == req.symbol)
+        .first()
+    )
     if not position or position.quantity < req.quantity:
         have = position.quantity if position else 0
         raise HTTPException(
@@ -107,7 +118,11 @@ def _process_sell(db: Session, acct: Account, req: TradeRequest) -> Transaction:
     # FIFO cost calculation
     lots = (
         db.query(FifoLot)
-        .filter(FifoLot.symbol == req.symbol, FifoLot.remaining_qty > 0)
+        .filter(
+            FifoLot.portfolio_id == portfolio_id,
+            FifoLot.symbol == req.symbol,
+            FifoLot.remaining_qty > 0,
+        )
         .order_by(FifoLot.trade_date, FifoLot.id)
         .all()
     )
@@ -127,6 +142,7 @@ def _process_sell(db: Session, acct: Account, req: TradeRequest) -> Transaction:
     pnl_pct = (pnl / fifo_cost * 100).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP) if fifo_cost else Decimal("0")
 
     tx = Transaction(
+        portfolio_id=portfolio_id,
         symbol=req.symbol,
         action=ActionType.SELL,
         price=req.price,
@@ -150,15 +166,15 @@ def _process_sell(db: Session, acct: Account, req: TradeRequest) -> Transaction:
     if position.quantity == 0:
         position.avg_cost = Decimal("0")
 
-    # Update account
-    acct.available_funds = (Decimal(str(acct.available_funds)) + sell_proceeds).quantize(
+    # Update portfolio
+    p.available_funds = (Decimal(str(p.available_funds)) + sell_proceeds).quantize(
         Decimal("0.0001"), rounding=ROUND_HALF_UP
     )
-    acct.total_invested = max(
+    p.total_invested = max(
         Decimal("0"),
-        (Decimal(str(acct.total_invested)) - sell_cost).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+        (Decimal(str(p.total_invested)) - sell_cost).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
     )
-    acct.realized_pnl = (Decimal(str(acct.realized_pnl)) + pnl).quantize(
+    p.realized_pnl = (Decimal(str(p.realized_pnl)) + pnl).quantize(
         Decimal("0.0001"), rounding=ROUND_HALF_UP
     )
 
@@ -167,8 +183,8 @@ def _process_sell(db: Session, acct: Account, req: TradeRequest) -> Transaction:
     return tx
 
 
-def get_trades(db: Session, symbol: str = None) -> list[Transaction]:
-    q = db.query(Transaction)
+def get_trades(db: Session, portfolio_id: int, symbol: str = None) -> list[Transaction]:
+    q = db.query(Transaction).filter(Transaction.portfolio_id == portfolio_id)
     if symbol:
         q = q.filter(Transaction.symbol == symbol)
     return q.order_by(Transaction.id.desc()).all()

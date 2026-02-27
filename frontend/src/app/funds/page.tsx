@@ -1,25 +1,22 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { fundsApi, fmt, Account, FundLedgerEntry } from "@/lib/api";
+import { fundsApi, portfolioApi, fmt, getErrorMsg, PortfolioInfo, FundLedgerEntry } from "@/lib/api";
+import { usePortfolioStore } from "@/lib/portfolio-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Wallet, Lock, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function FundsPage() {
-    const [account, setAccount] = useState<Account | null>(null);
+    const [portfolio, setPortfolio] = useState<PortfolioInfo | null>(null);
     const [ledger, setLedger] = useState<FundLedgerEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [depositOpen, setDepositOpen] = useState(false);
@@ -29,51 +26,66 @@ export default function FundsPage() {
     const [initForm, setInitForm] = useState({ amount: "", note: "", trade_date: "" });
     const [submitting, setSubmitting] = useState(false);
 
+    const activePortfolioId = usePortfolioStore((s) => s.activePortfolioId);
+
     const load = useCallback(async () => {
+        if (!activePortfolioId) { setLoading(false); return; }
         try {
-            const [accRes, ledRes] = await Promise.all([fundsApi.getAccount(), fundsApi.getLedger()]);
-            setAccount(accRes.data);
+            const [ledRes, overviewRes] = await Promise.all([
+                fundsApi.getLedger(activePortfolioId),
+                portfolioApi.get(activePortfolioId),
+            ]);
             setLedger(ledRes.data);
+            setPortfolio(overviewRes.data.portfolio);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [activePortfolioId]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => { setLoading(true); load(); }, [load]);
 
-    // Hydration-safe: 在 client mount 後才設定今天日期，避免 SSR/CSR 不一致
     useEffect(() => {
         const today = new Date().toISOString().slice(0, 10);
         setDepositForm(f => ({ ...f, trade_date: f.trade_date || today }));
         setInitForm(f => ({ ...f, trade_date: f.trade_date || today }));
     }, []);
 
+    const reloadLedger = async () => {
+        if (!activePortfolioId) return;
+        try {
+            const res = await fundsApi.getLedger(activePortfolioId);
+            setLedger(res.data);
+        } catch { /* ignore */ }
+    };
+
     const handleInit = async () => {
-        if (!initForm.amount) return;
+        if (!initForm.amount || !activePortfolioId) return;
         setSubmitting(true);
         try {
-            await fundsApi.init({ amount: Number(initForm.amount), note: initForm.note, trade_date: initForm.trade_date });
+            const res = await fundsApi.init(activePortfolioId, { amount: Number(initForm.amount), note: initForm.note, trade_date: initForm.trade_date });
             toast.success("初始資金設定成功！");
             setInitOpen(false);
-            load();
+            setPortfolio(res.data);
+            reloadLedger();
         } catch (e: any) {
-            toast.error(e?.response?.data?.detail ?? "設定失敗");
+            toast.error(getErrorMsg(e, "設定失敗"));
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleDeposit = async () => {
-        if (!depositForm.amount) return;
+        if (!depositForm.amount || !activePortfolioId) return;
         setSubmitting(true);
         try {
-            await fundsApi.deposit({ amount: Number(depositForm.amount), note: depositForm.note, trade_date: depositForm.trade_date });
+            const res = await fundsApi.deposit(activePortfolioId, { amount: Number(depositForm.amount), note: depositForm.note, trade_date: depositForm.trade_date });
             toast.success("增資成功！");
             setDepositOpen(false);
             setDepositForm({ amount: "", note: "", trade_date: new Date().toISOString().slice(0, 10) });
-            load();
+            setPortfolio(res.data);
+            reloadLedger();
         } catch (e: any) {
-            toast.error(e?.response?.data?.detail ?? "增資失敗");
+            toast.error(getErrorMsg(e, "增資失敗"));
         } finally {
             setSubmitting(false);
         }
@@ -86,6 +98,15 @@ export default function FundsPage() {
         WITHDRAW: "bg-red-500/15 text-red-400 border-red-500/30",
     };
 
+    if (!activePortfolioId) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 gap-4">
+                <Wallet className="w-16 h-16" style={{ color: "var(--sidebar-text)" }} />
+                <h2 className="text-xl font-semibold" style={{ color: "var(--body-text)" }}>請選擇代操帳戶</h2>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -94,104 +115,37 @@ export default function FundsPage() {
                     <p className="text-sm mt-1" style={{ color: "var(--sidebar-text)" }}>管理代操資金入金與異動紀錄</p>
                 </div>
                 <div className="flex gap-3">
-                    {!account?.is_initialized && (
+                    {!portfolio?.is_initialized && (
                         <Dialog open={initOpen} onOpenChange={setInitOpen}>
                             <DialogTrigger asChild>
                                 <Button className="bg-violet-600 hover:bg-violet-700 text-white">
-                                    <Wallet className="w-4 h-4 mr-2" />
-                                    設定初始資金
+                                    <Wallet className="w-4 h-4 mr-2" />設定初始資金
                                 </Button>
                             </DialogTrigger>
                             <DialogContent style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
-                                <DialogHeader>
-                                    <DialogTitle style={{ color: "var(--body-text)" }}>設定初始代操資金</DialogTitle>
-                                </DialogHeader>
+                                <DialogHeader><DialogTitle style={{ color: "var(--body-text)" }}>設定初始代操資金</DialogTitle></DialogHeader>
                                 <div className="space-y-4 mt-4">
-                                    <div className="space-y-2">
-                                        <Label style={{ color: "var(--sidebar-text)" }}>金額 (TWD)</Label>
-                                        <Input
-                                            type="number"
-                                            placeholder="300000"
-                                            value={initForm.amount}
-                                            onChange={(e) => setInitForm(f => ({ ...f, amount: e.target.value }))}
-                                            style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label style={{ color: "var(--sidebar-text)" }}>日期</Label>
-                                        <Input
-                                            type="date"
-                                            value={initForm.trade_date}
-                                            onChange={(e) => setInitForm(f => ({ ...f, trade_date: e.target.value }))}
-                                            style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label style={{ color: "var(--sidebar-text)" }}>備註</Label>
-                                        <Input
-                                            placeholder="可選填"
-                                            value={initForm.note}
-                                            onChange={(e) => setInitForm(f => ({ ...f, note: e.target.value }))}
-                                            style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }}
-                                        />
-                                    </div>
-                                    <p className="text-xs text-amber-400 flex gap-2">
-                                        <Lock className="w-3 h-3 mt-0.5 shrink-0" />
-                                        初始資金設定後不可修改，後續增資請使用「新增資金」
-                                    </p>
-                                    <Button onClick={handleInit} disabled={submitting} className="w-full bg-violet-600 hover:bg-violet-700 text-white">
-                                        {submitting ? <RefreshCw className="animate-spin w-4 h-4 mr-2" /> : null}
-                                        確認設定
-                                    </Button>
+                                    <div className="space-y-2"><Label style={{ color: "var(--sidebar-text)" }}>金額 (TWD)</Label><Input type="number" placeholder="300000" value={initForm.amount} onChange={(e) => setInitForm(f => ({ ...f, amount: e.target.value }))} style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }} /></div>
+                                    <div className="space-y-2"><Label style={{ color: "var(--sidebar-text)" }}>日期</Label><Input type="date" value={initForm.trade_date} onChange={(e) => setInitForm(f => ({ ...f, trade_date: e.target.value }))} style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }} /></div>
+                                    <div className="space-y-2"><Label style={{ color: "var(--sidebar-text)" }}>備註</Label><Input placeholder="可選填" value={initForm.note} onChange={(e) => setInitForm(f => ({ ...f, note: e.target.value }))} style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }} /></div>
+                                    <p className="text-xs text-amber-400 flex gap-2"><Lock className="w-3 h-3 mt-0.5 shrink-0" />初始資金設定後不可修改，後續增資請使用「新增資金」</p>
+                                    <Button onClick={handleInit} disabled={submitting} className="w-full bg-violet-600 hover:bg-violet-700 text-white">{submitting ? <RefreshCw className="animate-spin w-4 h-4 mr-2" /> : null}確認設定</Button>
                                 </div>
                             </DialogContent>
                         </Dialog>
                     )}
-                    {account?.is_initialized && (
+                    {portfolio?.is_initialized && (
                         <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
                             <DialogTrigger asChild>
-                                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    新增資金
-                                </Button>
+                                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white"><Plus className="w-4 h-4 mr-2" />新增資金</Button>
                             </DialogTrigger>
                             <DialogContent style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
-                                <DialogHeader>
-                                    <DialogTitle style={{ color: "var(--body-text)" }}>新增資金（增資）</DialogTitle>
-                                </DialogHeader>
+                                <DialogHeader><DialogTitle style={{ color: "var(--body-text)" }}>新增資金（增資）</DialogTitle></DialogHeader>
                                 <div className="space-y-4 mt-4">
-                                    <div className="space-y-2">
-                                        <Label style={{ color: "var(--sidebar-text)" }}>金額 (TWD)</Label>
-                                        <Input
-                                            type="number"
-                                            placeholder="50000"
-                                            value={depositForm.amount}
-                                            onChange={(e) => setDepositForm(f => ({ ...f, amount: e.target.value }))}
-                                            style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label style={{ color: "var(--sidebar-text)" }}>日期</Label>
-                                        <Input
-                                            type="date"
-                                            value={depositForm.trade_date}
-                                            onChange={(e) => setDepositForm(f => ({ ...f, trade_date: e.target.value }))}
-                                            style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label style={{ color: "var(--sidebar-text)" }}>備註</Label>
-                                        <Input
-                                            placeholder="可選填"
-                                            value={depositForm.note}
-                                            onChange={(e) => setDepositForm(f => ({ ...f, note: e.target.value }))}
-                                            style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }}
-                                        />
-                                    </div>
-                                    <Button onClick={handleDeposit} disabled={submitting} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                                        {submitting ? <RefreshCw className="animate-spin w-4 h-4 mr-2" /> : null}
-                                        確認入金
-                                    </Button>
+                                    <div className="space-y-2"><Label style={{ color: "var(--sidebar-text)" }}>金額 (TWD)</Label><Input type="number" placeholder="50000" value={depositForm.amount} onChange={(e) => setDepositForm(f => ({ ...f, amount: e.target.value }))} style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }} /></div>
+                                    <div className="space-y-2"><Label style={{ color: "var(--sidebar-text)" }}>日期</Label><Input type="date" value={depositForm.trade_date} onChange={(e) => setDepositForm(f => ({ ...f, trade_date: e.target.value }))} style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }} /></div>
+                                    <div className="space-y-2"><Label style={{ color: "var(--sidebar-text)" }}>備註</Label><Input placeholder="可選填" value={depositForm.note} onChange={(e) => setDepositForm(f => ({ ...f, note: e.target.value }))} style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }} /></div>
+                                    <Button onClick={handleDeposit} disabled={submitting} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">{submitting ? <RefreshCw className="animate-spin w-4 h-4 mr-2" /> : null}確認入金</Button>
                                 </div>
                             </DialogContent>
                         </Dialog>
@@ -199,12 +153,11 @@ export default function FundsPage() {
                 </div>
             </div>
 
-            {/* Account summary — only 投入資金 and 可用資金 */}
-            {account && (
+            {portfolio && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                     {[
-                        { label: "投入資金", value: fmt.currency(account.total_deposited), color: "text-sky-400" },
-                        { label: "可用資金", value: fmt.currency(account.available_funds), color: "text-emerald-400" },
+                        { label: "投入資金", value: fmt.currency(portfolio.total_deposited), color: "text-sky-400" },
+                        { label: "可用資金", value: fmt.currency(portfolio.available_funds), color: "text-emerald-400" },
                     ].map(({ label, value, color }) => (
                         <Card key={label} style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
                             <CardContent className="p-3 md:p-5">
@@ -216,11 +169,8 @@ export default function FundsPage() {
                 </div>
             )}
 
-            {/* Ledger table */}
             <Card style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
-                <CardHeader>
-                    <CardTitle className="text-base font-semibold" style={{ color: "var(--body-text)" }}>資金異動明細</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-base font-semibold" style={{ color: "var(--body-text)" }}>資金異動明細</CardTitle></CardHeader>
                 <CardContent>
                     {loading ? (
                         <div className="flex justify-center py-8"><RefreshCw className="animate-spin text-emerald-400 w-6 h-6" /></div>
@@ -243,11 +193,7 @@ export default function FundsPage() {
                                         onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--table-row-hover)")}
                                         onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
                                     >
-                                        <td className="py-3">
-                                            <Badge variant="outline" className={cn("text-xs", typeColor[row.type])}>
-                                                {typeLabel[row.type]}
-                                            </Badge>
-                                        </td>
+                                        <td className="py-3"><Badge variant="outline" className={cn("text-xs", typeColor[row.type])}>{typeLabel[row.type]}</Badge></td>
                                         <td className="py-3 text-right font-semibold" style={{ color: "var(--body-text)" }}>{fmt.currency(row.amount)}</td>
                                         <td className="py-3 pl-6" style={{ color: "var(--sidebar-text)" }}>{fmt.date(row.trade_date)}</td>
                                         <td className="py-3" style={{ color: "var(--sidebar-text)" }}>{row.note ?? "—"}</td>

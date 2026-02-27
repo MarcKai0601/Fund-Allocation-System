@@ -14,6 +14,7 @@ class FundLedger(Base):
     __tablename__ = "fund_ledger"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    portfolio_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     type: Mapped[str] = mapped_column(Enum(LedgerType), nullable=False)
     amount: Mapped[float] = mapped_column(Numeric(18, 4), nullable=False)
     note: Mapped[str | None] = mapped_column(String(255), nullable=True)

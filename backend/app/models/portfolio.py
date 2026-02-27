@@ -1,12 +1,14 @@
-from sqlalchemy import Integer, Numeric, SmallInteger, DateTime, func
+from sqlalchemy import Integer, Numeric, SmallInteger, String, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
 
-class Account(Base):
-    __tablename__ = "account"
+class Portfolio(Base):
+    __tablename__ = "portfolios"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    owner_user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
     available_funds: Mapped[float] = mapped_column(Numeric(18, 4), default=0)
     total_invested: Mapped[float] = mapped_column(Numeric(18, 4), default=0)
     total_deposited: Mapped[float] = mapped_column(Numeric(18, 4), default=0)

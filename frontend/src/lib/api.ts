@@ -1,14 +1,48 @@
 import axios from "axios";
+import { useAuthStore } from "./auth-store";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
   headers: { "Content-Type": "application/json" },
 });
 
+// ── Request interceptor: auto-attach JWT ────────────────────────────────────
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ── Response interceptor: handle 401 / 422 ──────────────────────────────────
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    const status = err?.response?.status;
+    if (status === 401) {
+      useAuthStore.getState().logout();
+    }
+    return Promise.reject(err);
+  }
+);
+
+// ─── Error helper ────────────────────────────────────────────────────────────
+
+/** Safely extract error message string from Axios error (handles Pydantic 422 arrays) */
+export function getErrorMsg(e: any, fallback = "操作失敗"): string {
+  const detail = e?.response?.data?.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) return detail.map((d: any) => d.msg ?? JSON.stringify(d)).join("; ");
+  return fallback;
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export interface Account {
+export interface PortfolioInfo {
   id: number;
+  owner_user_id: string;
+  name: string;
   available_funds: number;
   total_invested: number;
   total_deposited: number;
@@ -71,8 +105,8 @@ export interface Position {
   change_pct: number | null;
 }
 
-export interface Portfolio {
-  account: Account;
+export interface PortfolioOverview {
+  portfolio: PortfolioInfo;
   positions: Position[];
   total_market_value: number;
   total_unrealized_pnl: number;
@@ -80,30 +114,48 @@ export interface Portfolio {
 
 // ─── API calls ───────────────────────────────────────────────────────────────
 
+/** Helper: build portfolio-scoped path */
+const p = (pid: number) => `/api/portfolios/${pid}`;
+
+export const portfoliosApi = {
+  create: (data: { name: string }) =>
+    api.post<PortfolioInfo>("/api/portfolios", data),
+  list: () => api.get<PortfolioInfo[]>("/api/portfolios"),
+};
+
 export const fundsApi = {
-  init: (data: { amount: number; note?: string; trade_date: string }) =>
-    api.post<Account>("/api/funds/init", data),
-  deposit: (data: { amount: number; note?: string; trade_date: string }) =>
-    api.post<Account>("/api/funds/deposit", data),
-  getLedger: () => api.get<FundLedgerEntry[]>("/api/funds/ledger"),
-  getAccount: () => api.get<Account>("/api/funds/account"),
+  init: (pid: number, data: { amount: number; note?: string; trade_date: string }) =>
+    api.post<PortfolioInfo>(`${p(pid)}/funds/init`, data),
+  deposit: (pid: number, data: { amount: number; note?: string; trade_date: string }) =>
+    api.post<PortfolioInfo>(`${p(pid)}/funds/deposit`, data),
+  getLedger: (pid: number) => api.get<FundLedgerEntry[]>(`${p(pid)}/funds/ledger`),
 };
 
 export const tradesApi = {
-  create: (data: TradeRequest) => api.post<Transaction>("/api/trades", data),
-  list: (symbol?: string) =>
-    api.get<Transaction[]>("/api/trades", { params: symbol ? { symbol } : {} }),
+  create: (pid: number, data: TradeRequest) =>
+    api.post<Transaction>(`${p(pid)}/trades`, data),
+  list: (pid: number, symbol?: string) =>
+    api.get<Transaction[]>(`${p(pid)}/trades`, { params: symbol ? { symbol } : {} }),
 };
 
 export const portfolioApi = {
-  get: () => api.get<Portfolio>("/api/portfolio"),
+  get: (pid: number) => api.get<PortfolioOverview>(`${p(pid)}/overview`),
 };
 
 export const stocksApi = {
   search: (q: string) =>
     api.get<StockMaster[]>("/api/stocks/search", { params: { q } }),
   getQuote: (symbol: string) =>
-    api.get<{ symbol: string; price: number; change_pct: number | null; name: string | null }>(`/api/stocks/quote/${symbol}`),
+    api.get<{ symbol: string; price: number; change_pct: number | null; name: string | null }>(
+      `/api/stocks/quote/${symbol}`
+    ),
+};
+
+// ─── Dev Auth (開發測試用) ────────────────────────────────────────────────────
+
+export const devApi = {
+  login: (userId = "dev_user_001") =>
+    api.post<{ token: string; user_id: string; ttl: number }>("/api/dev/login", { user_id: userId }),
 };
 
 // ─── Formatters ──────────────────────────────────────────────────────────────

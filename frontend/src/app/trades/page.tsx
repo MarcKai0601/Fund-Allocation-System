@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { tradesApi, stocksApi, portfolioApi, fmt, Transaction, StockMaster, Position } from "@/lib/api";
+import { tradesApi, stocksApi, portfolioApi, fmt, getErrorMsg, Transaction, StockMaster, Position } from "@/lib/api";
+import { usePortfolioStore } from "@/lib/portfolio-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, RefreshCw, Search } from "lucide-react";
+import { Plus, RefreshCw, Search, ArrowLeftRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const defaultForm = () => ({
@@ -38,6 +39,7 @@ export default function TradesPage() {
     const [submitting, setSubmitting] = useState(false);
     const [filterSymbol, setFilterSymbol] = useState("");
     const [positions, setPositions] = useState<Position[]>([]);
+    const activePortfolioId = usePortfolioStore((s) => s.activePortfolioId);
 
     // Autocomplete
     const [suggestions, setSuggestions] = useState<StockMaster[]>([]);
@@ -46,22 +48,24 @@ export default function TradesPage() {
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const load = useCallback(async (sym?: string) => {
+        if (!activePortfolioId) { setLoading(false); return; }
         try {
-            const res = await tradesApi.list(sym);
+            const res = await tradesApi.list(activePortfolioId, sym);
             setTrades(res.data);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [activePortfolioId]);
 
     const loadPositions = useCallback(async () => {
+        if (!activePortfolioId) return;
         try {
-            const res = await portfolioApi.get();
+            const res = await portfolioApi.get(activePortfolioId);
             setPositions(res.data.positions);
         } catch { /* ignore */ }
-    }, []);
+    }, [activePortfolioId]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => { setLoading(true); load(); }, [load]);
 
     // Hydration-safe: 在 client mount 後才設定今天日期，避免 SSR/CSR 不一致
     useEffect(() => {
@@ -134,8 +138,9 @@ export default function TradesPage() {
             return;
         }
         setSubmitting(true);
+        if (!activePortfolioId) return;
         try {
-            await tradesApi.create({
+            await tradesApi.create(activePortfolioId, {
                 symbol: form.symbol.split(" ")[0],
                 action: form.action,
                 price: Number(form.price),
@@ -150,7 +155,7 @@ export default function TradesPage() {
             load();
             loadPositions();
         } catch (e: any) {
-            toast.error(e?.response?.data?.detail ?? "交易失敗");
+            toast.error(getErrorMsg(e, "交易失敗"));
         } finally {
             setSubmitting(false);
         }
@@ -159,6 +164,15 @@ export default function TradesPage() {
     const filtered = filterSymbol
         ? trades.filter(t => t.symbol.toLowerCase().includes(filterSymbol.toLowerCase()))
         : trades;
+
+    if (!activePortfolioId) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 gap-4">
+                <ArrowLeftRight className="w-16 h-16" style={{ color: "var(--sidebar-text)" }} />
+                <h2 className="text-xl font-semibold" style={{ color: "var(--body-text)" }}>請選擇代操帳戶</h2>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">
@@ -335,7 +349,7 @@ export default function TradesPage() {
                     <Input
                         placeholder="過濾股票代號..."
                         value={filterSymbol}
-                        onChange={e => { setFilterSymbol(e.target.value); load(e.target.value || undefined); }}
+                        onChange={e => { setFilterSymbol(e.target.value); }}
                         style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }}
                         className="pl-9 w-56"
                     />

@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.models.stock_master import StockMaster
 from app.models.position import Position
-from app.models.account import Account
+from app.models.portfolio import Portfolio
 from app.core.config import settings
 from app.core.redis_client import get_quote, set_quote
-from app.schemas.schemas import PortfolioOut, AccountOut, PositionOut
+from app.schemas.schemas import PortfolioOverviewOut, PortfolioOut, PositionOut
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +22,6 @@ def _get_fugle_client():
 def _fetch_quote(symbol: str) -> dict | None:
     """
     取得即時報價：先查 Redis 快取，未命中則呼叫富果 SDK。
-
-    富果 intraday.quote 回傳欄位（我們使用的）：
-        lastPrice     - 最新成交價
-        previousClose - 昨日收盤價
-        changePercent - 漲跌幅 (%)，例：0.35 代表 +0.35%
-        change        - 漲跌點
-        name          - 股票名稱
     """
     # 1. Redis cache hit
     cached = get_quote(symbol)
@@ -36,9 +29,9 @@ def _fetch_quote(symbol: str) -> dict | None:
         logger.debug(f"Quote cache hit: {symbol}")
         return cached
 
-    # 2. 若未設定 API Key，提示並回傳 None
+    # 2. 若未設定 API Key，回傳 None
     if not settings.FUGLE_API_KEY:
-        logger.warning("FUGLE_API_KEY 未設定，無法取得即時報價。請在 .env 填入 API Key。")
+        logger.warning("FUGLE_API_KEY 未設定，無法取得即時報價。")
         return None
 
     # 3. 使用富果官方 SDK 取得報價
@@ -48,13 +41,12 @@ def _fetch_quote(symbol: str) -> dict | None:
 
         last_price = body.get("lastPrice")
         prev_close = body.get("previousClose")
-        change_pct = body.get("changePercent")  # 富果已提供，直接使用
+        change_pct = body.get("changePercent")
 
         if last_price is None:
             logger.warning(f"Fugle quote for {symbol} returned no lastPrice: {body}")
             return None
 
-        # changePercent 若未提供，自行計算
         if change_pct is None and prev_close:
             change_pct = round((last_price - prev_close) / prev_close * 100, 4)
 
@@ -74,11 +66,15 @@ def _fetch_quote(symbol: str) -> dict | None:
         return None
 
 
-def get_portfolio(db: Session) -> PortfolioOut:
-    acct = db.query(Account).filter(Account.id == 1).first()
-    positions = db.query(Position).filter(Position.quantity > 0).all()
+def get_portfolio_overview(db: Session, portfolio_id: int) -> PortfolioOverviewOut:
+    portfolio = db.query(Portfolio).filter(Portfolio.id == portfolio_id).first()
+    positions = (
+        db.query(Position)
+        .filter(Position.portfolio_id == portfolio_id, Position.quantity > 0)
+        .all()
+    )
 
-    # 取股票名稱（從 stock_master 作為備援）
+    # 取股票名稱
     symbols = [p.symbol for p in positions]
     stock_map: dict[str, str] = {}
     if symbols:
@@ -108,7 +104,6 @@ def get_portfolio(db: Session) -> PortfolioOut:
         if unrealized_pnl is not None:
             total_unrealized_pnl += unrealized_pnl
 
-        # 富果 SDK 回傳的名稱優先；否則從 stock_master 取
         name = (quote.get("name") if quote else None) or stock_map.get(pos.symbol)
 
         pos_out_list.append(
@@ -126,8 +121,8 @@ def get_portfolio(db: Session) -> PortfolioOut:
             )
         )
 
-    return PortfolioOut(
-        account=AccountOut.model_validate(acct),
+    return PortfolioOverviewOut(
+        portfolio=PortfolioOut.model_validate(portfolio),
         positions=pos_out_list,
         total_market_value=total_market_value,
         total_unrealized_pnl=total_unrealized_pnl,
