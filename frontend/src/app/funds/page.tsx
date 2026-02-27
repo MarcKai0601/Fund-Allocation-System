@@ -88,9 +88,9 @@ export default function FundsPage() {
 
     return (
         <div className="space-y-8">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold" style={{ color: "var(--body-text)" }}>資金管理</h1>
+                    <h1 className="text-xl md:text-2xl font-bold" style={{ color: "var(--body-text)" }}>資金管理</h1>
                     <p className="text-sm mt-1" style={{ color: "var(--sidebar-text)" }}>管理代操資金入金與異動紀錄</p>
                 </div>
                 <div className="flex gap-3">
@@ -201,15 +201,15 @@ export default function FundsPage() {
 
             {/* Account summary — only 投入資金 and 可用資金 */}
             {account && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                     {[
                         { label: "投入資金", value: fmt.currency(account.total_deposited), color: "text-sky-400" },
                         { label: "可用資金", value: fmt.currency(account.available_funds), color: "text-emerald-400" },
                     ].map(({ label, value, color }) => (
                         <Card key={label} style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
-                            <CardContent className="p-5">
-                                <p className="text-xs mb-2" style={{ color: "var(--sidebar-text)" }}>{label}</p>
-                                <p className={cn("text-xl font-bold", color)}>{value}</p>
+                            <CardContent className="p-3 md:p-5">
+                                <p className="text-xs mb-1 md:mb-2" style={{ color: "var(--sidebar-text)" }}>{label}</p>
+                                <p className={cn("text-base md:text-xl font-bold", color)}>{value}</p>
                             </CardContent>
                         </Card>
                     ))}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, ArrowLeftRight, TrendingUp, Sun, Moon, ALargeSmall } from "lucide-react";
+import { LayoutDashboard, BookOpen, ArrowLeftRight, TrendingUp, Sun, Moon, ALargeSmall, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -21,6 +21,7 @@ export default function Sidebar() {
     const { theme, setTheme, resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
     const [fontSize, setFontSize] = useState<FontSize>("md");
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     // Avoid hydration mismatch
     useEffect(() => { setMounted(true); }, []);
@@ -34,6 +35,21 @@ export default function Sidebar() {
         }
     }, []);
 
+    // Close mobile menu on route change
+    useEffect(() => {
+        setMobileOpen(false);
+    }, [pathname]);
+
+    // Prevent body scroll when mobile menu is open
+    useEffect(() => {
+        if (mobileOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+        return () => { document.body.style.overflow = ""; };
+    }, [mobileOpen]);
+
     const cycleFontSize = () => {
         const order: FontSize[] = ["md", "lg", "xl"];
         const next = order[(order.indexOf(fontSize) + 1) % order.length];
@@ -44,14 +60,8 @@ export default function Sidebar() {
 
     const isDark = resolvedTheme === "dark";
 
-    return (
-        <aside
-            className="w-64 min-h-screen flex flex-col transition-colors duration-200"
-            style={{
-                backgroundColor: "var(--sidebar-bg)",
-                borderRight: "1px solid var(--sidebar-border)",
-            }}
-        >
+    const sidebarContent = (
+        <>
             {/* Logo */}
             <div className="px-6 py-6 flex items-center gap-3" style={{ borderBottom: "1px solid var(--sidebar-border)" }}>
                 <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
@@ -61,6 +71,14 @@ export default function Sidebar() {
                     <p className="font-bold text-sm leading-tight" style={{ color: "var(--sidebar-hover-text)" }}>代操系統</p>
                     <p className="text-xs" style={{ color: "var(--sidebar-text)" }}>Fund Allocation</p>
                 </div>
+                {/* Mobile close button */}
+                <button
+                    className="ml-auto md:hidden p-1 rounded-lg transition-colors"
+                    style={{ color: "var(--sidebar-text)" }}
+                    onClick={() => setMobileOpen(false)}
+                >
+                    <X className="w-5 h-5" />
+                </button>
             </div>
 
             {/* Nav */}
@@ -139,9 +157,67 @@ export default function Sidebar() {
                 </div>
 
                 <p className="text-xs" style={{ color: "var(--sidebar-text)", opacity: 0.6 }}>
-                    台股代操管理平台 v2.0.0
+                    台股代操管理平台 v3.0.0
                 </p>
             </div>
-        </aside>
+        </>
+    );
+
+    return (
+        <>
+            {/* Mobile top bar */}
+            <div
+                className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center px-4 py-3 gap-3"
+                style={{
+                    backgroundColor: "var(--sidebar-bg)",
+                    borderBottom: "1px solid var(--sidebar-border)",
+                }}
+            >
+                <button
+                    onClick={() => setMobileOpen(true)}
+                    className="p-1.5 rounded-lg transition-colors"
+                    style={{ color: "var(--sidebar-text)" }}
+                >
+                    <Menu className="w-6 h-6" />
+                </button>
+                <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                    <TrendingUp className="w-4 h-4 text-white" />
+                </div>
+                <p className="font-bold text-sm" style={{ color: "var(--sidebar-hover-text)" }}>代操系統</p>
+            </div>
+
+            {/* Mobile overlay */}
+            {mobileOpen && (
+                <div
+                    className="md:hidden fixed inset-0 z-50 bg-black/50"
+                    onClick={() => setMobileOpen(false)}
+                />
+            )}
+
+            {/* Mobile slide-out drawer */}
+            <aside
+                className={cn(
+                    "md:hidden fixed top-0 left-0 h-full w-72 z-50 flex flex-col transition-transform duration-300 ease-in-out",
+                    mobileOpen ? "translate-x-0" : "-translate-x-full"
+                )}
+                style={{
+                    backgroundColor: "var(--sidebar-bg)",
+                    borderRight: "1px solid var(--sidebar-border)",
+                }}
+            >
+                {sidebarContent}
+            </aside>
+
+            {/* Desktop sidebar */}
+            <aside
+                className="hidden md:flex w-64 min-h-screen flex-col transition-colors duration-200"
+                style={{
+                    backgroundColor: "var(--sidebar-bg)",
+                    borderRight: "1px solid var(--sidebar-border)",
+                }}
+            >
+                {sidebarContent}
+            </aside>
+        </>
     );
 }

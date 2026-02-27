@@ -79,9 +79,32 @@
 }
 
 /* ── Font size scales ─────────────────────────────────── */
-html[data-font="md"] { font-size: 16px; }
-html[data-font="lg"] { font-size: 18px; }
-html[data-font="xl"] { font-size: 20px; }
+html[data-font="md"] {
+  font-size: 16px;
+}
+
+html[data-font="lg"] {
+  font-size: 18px;
+}
+
+html[data-font="xl"] {
+  font-size: 20px;
+}
+
+/* 手機端縮小字體避免溢出 */
+@media (max-width: 767px) {
+  html[data-font="md"] {
+    font-size: 14px;
+  }
+
+  html[data-font="lg"] {
+    font-size: 15px;
+  }
+
+  html[data-font="xl"] {
+    font-size: 16px;
+  }
+}
 
 /* ── Base styles ──────────────────────────────────────── */
 * {
@@ -104,15 +127,19 @@ aside {
 .light [class*="bg-gray-900"] {
   background-color: var(--card-bg) !important;
 }
+
 .light [class*="bg-gray-950"] {
   background-color: var(--body-bg) !important;
 }
+
 .light [class*="border-gray-800"] {
   border-color: var(--card-border) !important;
 }
+
 .light [class*="border-gray-700"] {
   border-color: var(--input-border) !important;
 }
+
 .light [class*="bg-gray-800"] {
   background-color: var(--input-bg) !important;
 }
@@ -122,6 +149,7 @@ aside {
 .light [class*="text-white"]:not([class*="bg-emerald"]):not([class*="bg-violet"]):not([class*="bg-red"]) {
   color: #1e293b !important;
 }
+
 /* 保證有色按鈕 text-white 不被覆蓋 */
 .light [class*="bg-emerald"] [class*="text-white"],
 .light [class*="bg-violet"] [class*="text-white"],
@@ -135,15 +163,19 @@ aside {
 .light [class*="text-gray-100"] {
   color: #334155 !important;
 }
+
 .light [class*="text-gray-300"] {
   color: #475569 !important;
 }
+
 .light [class*="text-gray-400"] {
   color: #64748b !important;
 }
+
 .light [class*="text-gray-500"] {
   color: #94a3b8 !important;
 }
+
 .light [class*="text-gray-600"] {
   color: #cbd5e1 !important;
 }
@@ -154,14 +186,17 @@ aside {
   border-color: var(--card-border) !important;
   color: var(--body-text) !important;
 }
+
 .light [data-slot="dialog-content"] [data-slot="dialog-title"] {
   color: var(--body-text) !important;
 }
+
 .light [data-slot="dialog-content"] input {
   background-color: var(--input-bg) !important;
   border-color: var(--input-border) !important;
   color: var(--body-text) !important;
 }
+
 .light [data-slot="dialog-content"] label {
   color: var(--sidebar-text) !important;
 }
@@ -172,8 +207,10 @@ input.no-spinner::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input.no-spinner[type="number"] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* ── Scrollbar styling ────────────────────────────────── */

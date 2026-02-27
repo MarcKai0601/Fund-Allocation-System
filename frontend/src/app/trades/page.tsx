@@ -162,9 +162,9 @@ export default function TradesPage() {
 
     return (
         <div className="space-y-8">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold" style={{ color: "var(--body-text)" }}>交易紀錄</h1>
+                    <h1 className="text-xl md:text-2xl font-bold" style={{ color: "var(--body-text)" }}>交易紀錄</h1>
                     <p className="text-sm mt-1" style={{ color: "var(--sidebar-text)" }}>記錄每一筆買賣操作與計算損益</p>
                 </div>
                 <Dialog open={open} onOpenChange={setOpen}>
@@ -174,7 +174,7 @@ export default function TradesPage() {
                             新增交易
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md" style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
+                    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
                         <DialogHeader>
                             <DialogTitle style={{ color: "var(--body-text)" }}>新增交易</DialogTitle>
                         </DialogHeader>
