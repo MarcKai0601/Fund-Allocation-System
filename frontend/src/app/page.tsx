@@ -12,7 +12,10 @@ export default function DashboardPage() {
   const [data, setData] = useState<PortfolioOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [mounted, setMounted] = useState(false);
   const activePortfolioId = usePortfolioStore((s) => s.activePortfolioId);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const load = useCallback(async () => {
     if (!activePortfolioId) { setLoading(false); return; }
@@ -121,7 +124,7 @@ export default function DashboardPage() {
         </div>
         <div className="hidden sm:flex items-center gap-3 text-xs" style={{ color: "var(--sidebar-text)" }}>
           <RefreshCw className="w-3 h-3" />
-          上次更新：{lastUpdated?.toLocaleTimeString("zh-TW") ?? "—"}
+          上次更新：{mounted && lastUpdated ? lastUpdated.toTimeString().slice(0, 8) : "—"}
         </div>
       </div>
 

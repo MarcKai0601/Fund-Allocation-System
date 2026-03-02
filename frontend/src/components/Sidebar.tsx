@@ -234,7 +234,7 @@ export default function Sidebar() {
                     </button>
                     <button
                         onClick={() => setTheme(isDark ? "light" : "dark")}
-                        title={isDark ? "切換淺色模式" : "切換深色模式"}
+                        title={mounted ? (isDark ? "切換淺色模式" : "切換深色模式") : "切換主題"}
                         className="p-2 rounded-lg transition-colors border"
                         style={{ backgroundColor: "var(--sidebar-hover-bg)", color: "var(--sidebar-text)", borderColor: "var(--sidebar-border)" }}
                     >

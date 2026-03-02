@@ -39,6 +39,8 @@ export default function TradesPage() {
     const [submitting, setSubmitting] = useState(false);
     const [filterSymbol, setFilterSymbol] = useState("");
     const [positions, setPositions] = useState<Position[]>([]);
+    const [quoteFetching, setQuoteFetching] = useState(false);
+    const [quoteSource, setQuoteSource] = useState<"live" | "none">("none");
     const activePortfolioId = usePortfolioStore((s) => s.activePortfolioId);
 
     // Autocomplete
@@ -111,14 +113,20 @@ export default function TradesPage() {
     const selectStock = async (s: StockMaster) => {
         setForm(f => ({ ...f, symbol: s.symbol, symbolDisplay: `${s.symbol} ${s.name}`, price: "" }));
         setShowSuggestions(false);
-        // Auto-fill today's real-time price
+        setQuoteSource("none");
+        // Auto-fill latest real-time price (bypass Redis cache, use FUGLE_API_KEY_QUOTE if configured)
+        setQuoteFetching(true);
         try {
             const res = await stocksApi.getQuote(s.symbol);
             if (res.data?.price) {
                 setForm(f => ({ ...f, price: String(res.data.price) }));
+                setQuoteSource("live");
             }
         } catch {
-            // Fugle API key may not be set — silently ignore
+            // Fugle API key may not be set — silently ignore, let user enter manually
+            toast.warning("無法取得即時報價，請手動輸入成交價格", { duration: 3000 });
+        } finally {
+            setQuoteFetching(false);
         }
     };
 
@@ -268,12 +276,26 @@ export default function TradesPage() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-2">
-                                    <Label style={{ color: "var(--sidebar-text)" }}>成交價格</Label>
+                                    <Label style={{ color: "var(--sidebar-text)" }} className="flex items-center gap-2">
+                                        成交價格
+                                        {quoteFetching && (
+                                            <span className="text-xs flex items-center gap-1" style={{ color: "var(--sidebar-text)" }}>
+                                                <RefreshCw className="w-3 h-3 animate-spin" />
+                                                取得報價中…
+                                            </span>
+                                        )}
+                                        {!quoteFetching && quoteSource === "live" && (
+                                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                ✦ 即時報價
+                                            </span>
+                                        )}
+                                    </Label>
                                     <Input
                                         type="number"
-                                        placeholder="800"
+                                        placeholder={quoteFetching ? "取得報價中…" : "800"}
                                         value={form.price}
-                                        onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                                        disabled={quoteFetching}
+                                        onChange={e => { setQuoteSource("none"); setForm(f => ({ ...f, price: e.target.value })); }}
                                         style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)", MozAppearance: "textfield" } as React.CSSProperties}
                                         className="no-spinner"
                                     />

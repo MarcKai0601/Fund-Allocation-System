@@ -44,17 +44,20 @@ def search_stocks(
     return stocks
 
 
-@router.get("/quote/{symbol}", summary="取得單一股票即時報價")
+@router.get("/quote/{symbol}", summary="取得單一股票即時報價（強制更新）")
 def get_quote(symbol: str, db: Session = Depends(get_db)):
     """
-    回傳指定股票的即時報價（優先讀 Redis 快取，再呼叫 Fugle API）。
-    用於新增交易時自動帶入當日成交價。
+    回傳指定股票的**最新**即時報價，**強制跳過 Redis cache** 直接呼叫 Fugle API。
+    優先使用 FUGLE_API_KEY_QUOTE（第二組 token），避免與定時刷新的 token 產生頻率限制衝突。
+    用於新增交易時選股後自動帶入當日成交價。
     """
-    from app.services.quote_service import _fetch_quote
-    data = _fetch_quote(symbol.upper())
+    from app.services.quote_service import fetch_quote_fresh
+    data = fetch_quote_fresh(symbol.upper())
     if data is None:
-        # 若 Fugle 無資料或 Key 未設定，回傳 404（前端降級為空白輸入）
-        raise HTTPException(status_code=404, detail=f"無法取得 {symbol} 即時報價，請確認 FUGLE_API_KEY 是否設定。")
+        raise HTTPException(
+            status_code=404,
+            detail=f"無法取得 {symbol} 即時報價，請確認 FUGLE_API_KEY / FUGLE_API_KEY_QUOTE 是否設定。"
+        )
     return {
         "symbol": symbol.upper(),
         "price": data["price"],
