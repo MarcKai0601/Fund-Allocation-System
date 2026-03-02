@@ -37,27 +37,39 @@
 
 ## 2. 環境安裝
 
-### Step 1：安裝 Xcode（必要）
+> **現代做法**：不需要安裝完整的 Xcode（12GB+），只需安裝 **Command Line Tools** 與 **iOS Simulator Runtime** 即可在本機跑模擬器。完整 Xcode 只在需要上架到 App Store 或用原生模組時才必要。
 
-```bash
-# 從 App Store 安裝 Xcode（約 12GB，需要時間）
-# 搜尋 "Xcode" → 安裝
-```
+### Step 1：安裝 Xcode Command Line Tools
 
-安裝完成後，開啟 Xcode 一次並同意所有條款。
-
-然後安裝 Command Line Tools：
 ```bash
 xcode-select --install
 ```
 
-### Step 2：安裝 iOS Simulator
+> 安裝大約 500MB，遠比完整 Xcode 小。安裝後確認：
+> ```bash
+> xcode-select -p
+> # 預期輸出：/Library/Developer/CommandLineTools
+> ```
 
-1. 開啟 **Xcode**
-2. 選單列 → **Xcode** → **Settings** (或 Preferences)
-3. 點 **Platforms** 頁籤
-4. 點 **+** 加入 **iOS xx.x Simulator**（選最新版）
-5. 下載完成即可
+### Step 2：安裝 iOS Simulator Runtime（不需開啟 Xcode）
+
+從 macOS 15 (Sequoia) 起，可以直接用指令下載模擬器 Runtime，不需要開 Xcode GUI：
+
+```bash
+# 列出可用的 simulator runtime
+xcrun simctl runtime list
+
+# 透過 Xcode CLI 下載最新 iOS simulator（約 7GB）
+xcodebuild -downloadPlatform iOS
+```
+
+> 如果你偏好 GUI，也可以使用 **Simulator.app**（在 `/Applications/Simulator.app` 或從 Xcode 選單啟動），在其中直接管理裝置清單。
+
+下載完成後，確認模擬器可用：
+```bash
+# 列出所有可用模擬器
+xcrun simctl list devices available
+```
 
 ### Step 3：確認 Node.js
 
@@ -167,17 +179,28 @@ npx expo start
 
 ## 5. 在 iOS 模擬器上運行
 
-1. 確認 Xcode 和模擬器已安裝（[Step 1-2](#step-1安裝-xcode必要)）
-2. 執行：
+> **現代做法**：直接用指令啟動，不需要打開 Xcode GUI。
 
 ```bash
 cd ios-app
 npx expo start --ios
 ```
 
-或者在 Expo 開發伺服器啟動後，按 **`i`** 鍵。
+或在 Expo 開發伺服器啟動後按 **`i`** 鍵。
 
-> **首次啟動會在模擬器上安裝 Expo Go App，需要幾分鐘。**
+Expo 會自動選擇最新的可用模擬器並啟動。如果你想指定裝置型號：
+
+```bash
+# 列出可用裝置
+xcrun simctl list devices available | grep "iPhone"
+
+# 啟動指定裝置（用 UDID 或名稱）
+xcrun simctl boot "iPhone 16 Pro"
+open -a Simulator
+npx expo start --ios
+```
+
+> **首次啟動**會在模擬器上安裝 Expo Go App，需要幾分鐘。
 
 ### 模擬器常用操作
 
@@ -187,12 +210,32 @@ npx expo start --ios
 | 重新載入 | 開發選單 → Reload 或按 `r` |
 | Home 鍵 | `Cmd + Shift + H` |
 | 旋轉 | `Cmd + ←` / `Cmd + →` |
+| 截圖 | `Cmd + S` |
+
+### 模擬器管理指令（xcrun simctl）
+
+```bash
+# 列出所有模擬器
+xcrun simctl list devices
+
+# 開機指定模擬器
+xcrun simctl boot "iPhone 16 Pro"
+
+# 關機所有模擬器
+xcrun simctl shutdown all
+
+# 刪除所有舊資料（相當於出廠重置）
+xcrun simctl erase all
+
+# 截圖存到桌面
+xcrun simctl io booted screenshot ~/Desktop/screenshot.png
+```
 
 ---
 
 ## 6. 在真實 iPhone 上運行
 
-### 方法一：Expo Go App（最簡單）
+### 方法一：Expo Go App（最快，開發中推薦）
 
 1. iPhone 上從 App Store 安裝 **Expo Go**
 2. 確認 iPhone 和電腦在**同一個 WiFi**
@@ -201,16 +244,34 @@ npx expo start --ios
 5. 用 iPhone 相機掃描終端機的 QR Code
 6. 自動在 Expo Go 中打開 App
 
-### 方法二：Development Build（更完整）
+> 適合日常開發，無需 Apple Developer 帳號，即時熱更新。
 
-如果用到原生模組（如 Camera），需要 Development Build：
+### 方法二：EAS Build（接近正式 App 的體驗）
+
+EAS（Expo Application Services）是 Expo 官方的雲端建置服務，**不需要在本機安裝完整 Xcode**：
 
 ```bash
-npx expo install expo-dev-client
-npx expo run:ios --device
+# 安裝 EAS CLI
+npm install -g eas-cli
+eas login
+
+# 建立 Development Build（第一次）
+eas build --platform ios --profile development
+
+# 後續開發：開發伺服器連接已安裝的 dev build
+npx expo start --dev-client
 ```
 
-> 這需要 Apple Developer Account（免費版可側載到自己的設備）。
+> Development Build 安裝後的使用體驗幾乎等同於正式 App，支援原生模組（如 Camera、NFC 等），且後續修改 JS 程式碼**不需要重新 build**，只要重新整理即可。
+
+### 方法三：本機 Development Build（需完整 Xcode）
+
+如果需要快速迭代原生模組且不想等雲端 build：
+
+```bash
+# 需要完整 Xcode（App Store 安裝，約 12GB）
+npx expo run:ios --device
+```
 
 ---
 
@@ -223,14 +284,23 @@ npx expo start
 # 直接開啟 iOS 模擬器
 npx expo start --ios
 
+# 連接已安裝的 Development Build
+npx expo start --dev-client
+
 # 清除快取重新啟動
 npx expo start --clear
 
-# 安裝新的 npm 套件
+# 安裝新的 npm 套件（用 expo install 確保版本相容）
 npx expo install <package-name>
 
-# 檢查哪些套件需要更新
+# 檢查套件版本是否相容
 npx expo install --check
+
+# 升級 Expo SDK
+npx expo upgrade
+
+# 查看目前專案狀態與建議
+npx expo doctor
 ```
 
 ---
@@ -245,7 +315,10 @@ npx expo install --check
    ```bash
    npm install -g eas-cli
    eas login
+   eas init   # 初始化 EAS 專案（首次）
    ```
+
+> 使用 EAS 建置，**不需要在本機安裝完整 Xcode**，所有建置在 Expo 雲端執行。
 
 ### 8.2 設定 app.json
 
@@ -263,34 +336,55 @@ npx expo install --check
 }
 ```
 
-### 8.3 建置 iOS App
+### 8.3 EAS Build 流程（全雲端）
 
 ```bash
-# 產生 iOS build
-eas build --platform ios
+# 建置 production iOS build
+eas build --platform ios --profile production
 
-# 提交到 App Store
-eas submit --platform ios
+# 提交到 App Store（自動上傳到 App Store Connect）
+eas submit --platform ios --latest
 ```
 
-### 8.4 App Store 審核
+### 8.4 TestFlight 測試（強烈推薦）
 
-- 建置完成後，前往 [App Store Connect](https://appstoreconnect.apple.com)
-- 填寫 App 資訊（截圖、描述、分類）
+正式審核前，先用 TestFlight 邀請測試者：
+
+```bash
+# 建置 preview build 並上傳到 TestFlight
+eas build --platform ios --profile preview
+eas submit --platform ios --latest
+```
+
+- 前往 [App Store Connect](https://appstoreconnect.apple.com)
+- 在 TestFlight 頁籤邀請測試者（輸入 Email）
+- 測試者安裝 **TestFlight App** 即可收到測試版
+
+> TestFlight 無需通過完整審核，一般 1 天內會審核通過。
+
+### 8.5 App Store 正式審核
+
+- 填寫 App 資訊（截圖、描述、分類、隱私政策）
 - 提交審核（通常 1-3 天）
-
-> **💡 提示**: 測試階段可使用 **TestFlight** 發送給測試者，不需要通過正式審核。
 
 ---
 
 ## 9. 常見問題
 
-### Q1：模擬器打不開
+### Q1：模擬器無法啟動
 
 ```bash
-# 重新安裝模擬器
-sudo xcode-select -s /Applications/Xcode.app
-xcodebuild -runFirstLaunch
+# 確認 Command Line Tools 已正確設定
+xcode-select -p
+
+# 重設指向正確路徑
+sudo xcode-select --switch /Library/Developer/CommandLineTools
+
+# 列出可用模擬器，確認有已下載的版本
+xcrun simctl list devices available
+
+# 重建模擬器清單
+xcrun simctl delete unavailable
 ```
 
 ### Q2：真機連不到 API
@@ -298,9 +392,22 @@ xcodebuild -runFirstLaunch
 - 確認 iPhone 和電腦在同一 WiFi
 - 確認 `API_BASE` 設為電腦 IP（非 `localhost`）
 - 確認 backend 用 `--host 0.0.0.0` 啟動
-- 檢查防火牆是否阻擋 port 8000
+- 檢查防火牆是否阻擋 port 8000：
+  ```bash
+  # 暫時允許 port 8000（macOS）
+  sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add /usr/bin/python3
+  ```
 
-### Q3：React Native 跟 React 的差異
+### Q3：「xcrun: error: unable to find utility simctl」
+
+代表 Command Line Tools 路徑設定錯誤：
+```bash
+sudo xcode-select --switch /Library/Developer/CommandLineTools
+# 如果你有安裝完整 Xcode，改為：
+sudo xcode-select --switch /Applications/Xcode.app
+```
+
+### Q4：React Native 跟 React 的差異
 
 | React (Web) | React Native (Mobile) |
 |-------------|----------------------|
@@ -312,7 +419,7 @@ xcodebuild -runFirstLaunch
 | `window.alert()` | `Alert.alert()` |
 | `fetch` / `axios` | 一樣用 `axios` ✅ |
 
-### Q4：如何新增頁面？
+### Q5：如何新增頁面？
 
 1. 在 `src/screens/` 建立 `NewScreen.tsx`
 2. 在 `App.tsx` 的 `<Tab.Navigator>` 中新增：
@@ -327,7 +434,7 @@ xcodebuild -runFirstLaunch
 />
 ```
 
-### Q5：修改 App 圖示
+### Q6：修改 App 圖示
 
 將圖示（1024x1024 PNG）放到 `ios-app/assets/icon.png`，Expo 會自動處理各尺寸。
 
@@ -336,16 +443,20 @@ xcodebuild -runFirstLaunch
 ## 快速開始（TL;DR）
 
 ```bash
-# 1. 安裝 Xcode（App Store）
-# 2. 安裝 CLI tools
+# 1. 安裝 Command Line Tools（不需要完整 Xcode！）
 xcode-select --install
 
-# 3. 安裝依賴
+# 2. 下載 iOS Simulator Runtime
+xcodebuild -downloadPlatform iOS
+
+# 3. 安裝專案依賴
 cd ios-app && npm install
 
 # 4. 啟動 backend
 cd ../backend && source venv/bin/activate && uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# 5. 啟動 iOS 模擬器
+# 5. 啟動 iOS 模擬器（新開一個 terminal）
 cd ../ios-app && npx expo start --ios
 ```
+
+> **真機測試最快方式**：iPhone 安裝 [Expo Go](https://apps.apple.com/app/expo-go/id982107779)，執行 `npx expo start` 掃 QR Code 即可。無需任何 Apple Developer 帳號。
