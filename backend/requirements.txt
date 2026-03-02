@@ -1,0 +1,11 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+sqlalchemy==2.0.41
+pymysql==1.1.1
+pydantic==2.11.6
+pydantic-settings==2.9.1
+redis==6.2.0
+httpx==0.28.1
+fugle-marketdata==2.4.1
+twstock==1.4.0
+apscheduler==3.10.4
