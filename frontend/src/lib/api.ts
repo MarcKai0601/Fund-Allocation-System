@@ -151,11 +151,13 @@ export const stocksApi = {
     ),
 };
 
-// ─── Dev Auth (開發測試用) ────────────────────────────────────────────────────
+// ─── Dev Auth (模擬 Java MGR SSO 登入) ────────────────────────────────────────
 
 export const devApi = {
-  login: (userId = "dev_user_001") =>
-    api.post<{ token: string; user_id: string; ttl: number }>("/api/dev/login", { user_id: userId }),
+  login: (userId = 1) =>
+    api.post<{ token: string; user_id: number; roles: Record<string, string[]>; ttl: number }>(
+      "/api/dev/login", { user_id: userId }
+    ),
 };
 
 // ─── Formatters ──────────────────────────────────────────────────────────────

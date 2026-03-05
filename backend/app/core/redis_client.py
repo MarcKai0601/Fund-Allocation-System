@@ -9,16 +9,33 @@ def get_redis():
     return redis.Redis(connection_pool=_pool)
 
 
-def set_auth_token(token, user_id, ttl=None):
+def set_auth_token(token: str, user_id: int, roles: dict | None = None, ttl: int | None = None):
+    """
+    寫入 Token Session 到 Redis (與 Java MGR 共用格式)。
+    Key: token:<token>
+    Value: JSON {"UserId": int, "Roles": {"FAS": [...], ...}}
+    """
     if ttl is None:
         ttl = settings.AUTH_TOKEN_TTL
+    if roles is None:
+        roles = {"FAS": ["ADMIN"]}
     r = get_redis()
-    r.setex(f"auth:token:{token}", ttl, user_id)
+    session = json.dumps({"UserId": user_id, "Roles": roles})
+    r.setex(f"token:{token}", ttl, session)
 
 
-def delete_auth_token(token):
+def get_auth_session(token: str) -> dict | None:
+    """從 Redis 讀取 Token Session JSON。"""
     r = get_redis()
-    r.delete(f"auth:token:{token}")
+    raw = r.get(f"token:{token}")
+    if raw:
+        return json.loads(raw)
+    return None
+
+
+def delete_auth_token(token: str):
+    r = get_redis()
+    r.delete(f"token:{token}")
 
 
 def get_quote(symbol):

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.core.database import get_db
-from app.core.security import get_current_user, get_valid_portfolio
+from app.core.security import require_fas_access, get_valid_portfolio
 from app.models.portfolio import Portfolio
 from app.services import fund_service, trade_service
 from app.services.quote_service import get_portfolio_overview
@@ -19,10 +19,10 @@ router = APIRouter(prefix="/api/portfolios", tags=["Portfolios"])
 @router.post("", response_model=PortfolioOut, summary="Create portfolio")
 def create_portfolio(
     req: PortfolioCreateRequest,
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(require_fas_access),
     db: Session = Depends(get_db),
 ):
-    p = Portfolio(owner_user_id=user_id, name=req.name)
+    p = Portfolio(owner_user_id=str(user_id), name=req.name)
     db.add(p)
     db.commit()
     db.refresh(p)
@@ -31,12 +31,12 @@ def create_portfolio(
 
 @router.get("", response_model=list[PortfolioOut], summary="List my portfolios")
 def list_portfolios(
-    user_id: str = Depends(get_current_user),
+    user_id: int = Depends(require_fas_access),
     db: Session = Depends(get_db),
 ):
     return (
         db.query(Portfolio)
-        .filter(Portfolio.owner_user_id == user_id)
+        .filter(Portfolio.owner_user_id == str(user_id))
         .order_by(Portfolio.id)
         .all()
     )
