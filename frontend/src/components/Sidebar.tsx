@@ -242,7 +242,7 @@ export default function Sidebar() {
                     </button>
                 </div>
                 <p className="text-xs" style={{ color: "var(--sidebar-text)", opacity: 0.6 }}>
-                    台股代操管理平台 v4.0.0
+                    台股代操管理平台 v5.0.0
                 </p>
             </div>
         </>

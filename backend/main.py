@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Fund Allocation System API",
     description="Multi-portfolio fund management",
-    version="4.0.0",
+    version="5.0.0",
     lifespan=lifespan,
 )
 
@@ -57,4 +57,5 @@ app.include_router(dev_auth.router)  # DEV ONLY — 生產環境移除
 
 @app.get("/", tags=["Health"])
 def health():
-    return {"status": "ok", "service": "Fund Allocation System", "version": "4.0.0"}
+    return {"status": "ok", "service": "Fund Allocation System", "version": "5.0.0"}
+

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.core.database import get_db
-from app.core.security import require_fas_access, get_valid_portfolio
+from app.core.security import require_fas_access, get_valid_portfolio, RequireRole, UserSession
 from app.models.portfolio import Portfolio
 from app.services import fund_service, trade_service
 from app.services.quote_service import get_portfolio_overview
@@ -40,6 +40,15 @@ def list_portfolios(
         .order_by(Portfolio.id)
         .all()
     )
+
+
+@router.get("/all", response_model=list[PortfolioOut], summary="[ADMIN] List all portfolios")
+def list_all_portfolios(
+    admin: UserSession = Depends(RequireRole("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """管理員專用：取得系統所有 Portfolios（跨使用者）。需要 ADMIN 角色。"""
+    return db.query(Portfolio).order_by(Portfolio.id).all()
 
 
 @router.get("/{pid}/overview", response_model=PortfolioOverviewOut, summary="Portfolio overview")

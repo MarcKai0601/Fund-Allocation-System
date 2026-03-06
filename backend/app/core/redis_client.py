@@ -9,19 +9,39 @@ def get_redis():
     return redis.Redis(connection_pool=_pool)
 
 
-def set_auth_token(token: str, user_id: int, roles: dict | None = None, ttl: int | None = None):
+def set_auth_token(
+    token: str,
+    user_id: int,
+    roles: dict | None = None,
+    role_codes: list[str] | None = None,
+    username: str | None = None,
+    ttl: int | None = None,
+):
     """
     寫入 Token Session 到 Redis (與 Java MGR 共用格式)。
     Key: token:<token>
-    Value: JSON {"UserId": int, "Roles": {"FAS": [...], ...}}
+    Value: JSON 包含兩套欄位以保持相容性：
+      ▸ 新格式 (camelCase): userId, username, roles
+      ▸ 舊格式 (PascalCase): UserId, Roles
     """
     if ttl is None:
         ttl = settings.AUTH_TOKEN_TTL
     if roles is None:
         roles = {"FAS": ["ADMIN"]}
+    if role_codes is None:
+        role_codes = ["ADMIN"]
+
     r = get_redis()
-    session = json.dumps({"UserId": user_id, "Roles": roles})
-    r.setex(f"token:{token}", ttl, session)
+    session_data = {
+        # 舊格式 (PascalCase) — 現有路由相容
+        "UserId": user_id,
+        "Roles": roles,
+        # 新格式 (camelCase) — RBAC 新機制使用
+        "userId": user_id,
+        "username": username,
+        "roles": [{"roleCode": rc} for rc in role_codes],
+    }
+    r.setex(f"token:{token}", ttl, json.dumps(session_data))
 
 
 def get_auth_session(token: str) -> dict | None:
