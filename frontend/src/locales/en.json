@@ -11,6 +11,8 @@
         "portfolio": "Portfolio",
         "selectPortfolio": "Select Account",
         "addPortfolio": "Add Portfolio",
+        "appLauncher": "All Apps",
+        "logout": "Logout",
         "font": "Font: ",
         "newPortfolioTitle": "Add New Portfolio",
         "accountName": "Account Name",

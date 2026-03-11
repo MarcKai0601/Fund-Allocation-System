@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
     LayoutDashboard, BookOpen, ArrowLeftRight, TrendingUp,
     Sun, Moon, ALargeSmall, Menu, X, Plus, ChevronDown, Globe,
+    Grid3x3, LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -177,6 +178,26 @@ export default function Sidebar() {
                 </button>
             </div>
 
+            {/* App Launcher */}
+            <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--sidebar-border)" }}>
+                <button
+                    onClick={() => window.location.href = process.env.NEXT_PUBLIC_SSO_WELCOME_URL || "http://localhost:5174/welcome"}
+                    className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
+                    style={{ color: "var(--sidebar-text)" }}
+                    onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = "var(--sidebar-hover-bg)";
+                        (e.currentTarget as HTMLElement).style.color = "var(--sidebar-hover-text)";
+                    }}
+                    onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                        (e.currentTarget as HTMLElement).style.color = "var(--sidebar-text)";
+                    }}
+                >
+                    <Grid3x3 className="w-4 h-4 shrink-0" />
+                    {t("sidebar.appLauncher")}
+                </button>
+            </div>
+
             {/* Portfolio Switcher */}
             {portfolioSwitcher}
 
@@ -252,6 +273,17 @@ export default function Sidebar() {
                 <p className="text-xs" style={{ color: "var(--sidebar-text)", opacity: 0.6 }}>
                     {t("sidebar.version")}
                 </p>
+                <button
+                    onClick={() => {
+                        useAuthStore.getState().logout();
+                        window.location.href = process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5174/login";
+                    }}
+                    className="flex w-full items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors mt-2 hover:bg-red-500/10 hover:text-red-400"
+                    style={{ color: "var(--sidebar-text)" }}
+                >
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    {t("sidebar.logout")}
+                </button>
             </div>
         </>
     );
