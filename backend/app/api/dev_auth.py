@@ -31,6 +31,7 @@ class DevLoginRequest(BaseModel):
         default=["ADMIN"],
         description="模擬的角色代碼清單 (新 RBAC 格式)",
     )
+    language: str = Field(default="zh-TW", description="使用者語系偏好")
 
 
 class DevLoginResponse(BaseModel):
@@ -39,6 +40,7 @@ class DevLoginResponse(BaseModel):
     username: str
     roles: dict
     role_codes: list[str]
+    language: str
     ttl: int
 
 
@@ -56,15 +58,16 @@ def dev_login(req: DevLoginRequest = DevLoginRequest()):
         roles=req.roles,
         role_codes=req.role_codes,
         username=req.username,
+        language=req.language,
         ttl=ttl,
     )
     logger.info(
         f"[DEV] Login: UserId={req.user_id}, username={req.username}, "
-        f"Roles={req.roles}, role_codes={req.role_codes}, token={token}"
+        f"Roles={req.roles}, role_codes={req.role_codes}, language={req.language}, token={token}"
     )
     return DevLoginResponse(
         token=token, user_id=req.user_id, username=req.username,
-        roles=req.roles, role_codes=req.role_codes, ttl=ttl,
+        roles=req.roles, role_codes=req.role_codes, language=req.language, ttl=ttl,
     )
 
 

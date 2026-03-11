@@ -15,13 +15,14 @@ def set_auth_token(
     roles: dict | None = None,
     role_codes: list[str] | None = None,
     username: str | None = None,
+    language: str | None = "zh-TW",
     ttl: int | None = None,
 ):
     """
     寫入 Token Session 到 Redis (與 Java MGR 共用格式)。
     Key: token:<token>
     Value: JSON 包含兩套欄位以保持相容性：
-      ▸ 新格式 (camelCase): userId, username, roles
+      ▸ 新格式 (camelCase): userId, username, roles, language
       ▸ 舊格式 (PascalCase): UserId, Roles
     """
     if ttl is None:
@@ -40,6 +41,7 @@ def set_auth_token(
         "userId": user_id,
         "username": username,
         "roles": [{"roleCode": rc} for rc in role_codes],
+        "language": language,
     }
     r.setex(f"token:{token}", ttl, json.dumps(session_data))
 

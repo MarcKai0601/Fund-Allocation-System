@@ -25,6 +25,7 @@ class UserSession(BaseModel):
     user_id: str
     username: Optional[str] = None
     roles: list[str] = []  # 這裡只存放屬於 FAS 的角色代碼 (如 ["ADMIN", "USER"])
+    language: Optional[str] = "zh-TW"
 
 
 # ── Dependency 1: Token 驗證與滑動視窗 ─────────────────────────────────────────
@@ -84,7 +85,9 @@ def get_current_user_session(session: dict = Depends(get_current_user)) -> UserS
         elif isinstance(role, str): # 容錯: 如果還是舊的純字串陣列
             fas_roles.append(role)
 
-    return UserSession(user_id=user_id, username=username, roles=fas_roles)
+    language = session.get("language") or session.get("Language") or "zh-TW"
+
+    return UserSession(user_id=user_id, username=username, roles=fas_roles, language=language)
 
 
 # ── Dependency 3: 基本 FAS 系統權限檢查 ──────────────────────────────────────

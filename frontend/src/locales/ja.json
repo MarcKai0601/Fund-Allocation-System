@@ -1,0 +1,29 @@
+{
+    "nav": {
+        "dashboard": "ダッシュボード",
+        "funds": "資金管理",
+        "trades": "取引履歴"
+    },
+    "sidebar": {
+        "title": "運用システム",
+        "subtitle": "Fund Allocation",
+        "version": "台湾株運用管理プラットフォーム v5.0.0",
+        "portfolio": "ポートフォリオ",
+        "selectPortfolio": "口座を選択",
+        "addPortfolio": "ポートフォリオ追加",
+        "font": "フォント: ",
+        "newPortfolioTitle": "新規ポートフォリオ作成",
+        "accountName": "口座名",
+        "accountNamePlaceholder": "例: 母の年金、友人Aの運用",
+        "createSuccess": "ポートフォリオの作成に成功しました！",
+        "creating": "作成中...",
+        "confirmCreate": "作成する",
+        "themeLight": "ライトモードに切り替え",
+        "themeDark": "ダークモードに切り替え",
+        "fontTitle": "フォントサイズ調整"
+    },
+    "errors": {
+        "forbidden": "この操作を実行する権限がありません",
+        "createFailed": "作成失敗"
+    }
+}

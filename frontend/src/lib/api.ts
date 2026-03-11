@@ -15,19 +15,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ── Response interceptor: handle 401 / 422 ──────────────────────────────────
+import { toast } from "sonner";
+import i18n from "@/i18n/config";
+
+// ── Response interceptor: handle 401 / 403 / 422 ────────────────────────────
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     const status = err?.response?.status;
     if (status === 401) {
       useAuthStore.getState().logout();
-      // 重導向到 SSO 登入頁，並附帶 redirect 參數
+      // 重導向到 SSO 登入頁 (Port 5174)，並附帶 redirect 參數
       if (typeof window !== "undefined") {
         const ssoLoginUrl =
           process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5174/login";
         window.location.href = `${ssoLoginUrl}?redirect=${encodeURIComponent(window.location.href)}`;
       }
+    } else if (status === 403) {
+      // 權限不足，顯示 Toast 而不要跳轉，避免死迴圈
+      toast.error(i18n.t("errors.forbidden", "權限不足，無法執行此操作"));
     }
     return Promise.reject(err);
   }
@@ -157,12 +163,23 @@ export const stocksApi = {
     ),
 };
 
+export interface UserProfile {
+  user_id: string;
+  username: string | null;
+  roles: string[];
+  language: string;
+}
+
+export const authApi = {
+  getMe: () => api.get<UserProfile>("/api/auth/me"),
+};
+
 // ─── Dev Auth (模擬 Java MGR SSO 登入) ────────────────────────────────────────
 
 export const devApi = {
   login: (userId = 1) =>
-    api.post<{ token: string; user_id: number; roles: Record<string, string[]>; ttl: number }>(
-      "/api/dev/login", { user_id: userId }
+    api.post<{ token: string; user_id: number; roles: Record<string, string[]>; language: string; ttl: number }>(
+      "/api/dev/login", { user_id: userId, language: i18n.language || "zh-TW" }
     ),
 };
 

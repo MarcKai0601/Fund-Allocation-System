@@ -1,0 +1,29 @@
+{
+    "nav": {
+        "dashboard": "대시보드",
+        "funds": "자금 관리",
+        "trades": "거래 내역"
+    },
+    "sidebar": {
+        "title": "운용 시스템",
+        "subtitle": "Fund Allocation",
+        "version": "대만 주식 운용 플랫폼 v5.0.0",
+        "portfolio": "포트폴리오",
+        "selectPortfolio": "계좌 선택",
+        "addPortfolio": "포트폴리오 추가",
+        "font": "글꼴: ",
+        "newPortfolioTitle": "새 포트폴리오 추가",
+        "accountName": "계좌 이름",
+        "accountNamePlaceholder": "예: 엄마 연금, 친구 A 운용",
+        "createSuccess": "포트폴리오 생성 완료!",
+        "creating": "생성 중...",
+        "confirmCreate": "확인",
+        "themeLight": "라이트 모드로 전환",
+        "themeDark": "다크 모드로 전환",
+        "fontTitle": "글꼴 크기 조정"
+    },
+    "errors": {
+        "forbidden": "이 작업을 수행할 권한이 없습니다.",
+        "createFailed": "생성 실패"
+    }
+}

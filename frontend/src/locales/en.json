@@ -1,0 +1,29 @@
+{
+    "nav": {
+        "dashboard": "Dashboard",
+        "funds": "Funds Management",
+        "trades": "Trade Records"
+    },
+    "sidebar": {
+        "title": "Trading System",
+        "subtitle": "Fund Allocation",
+        "version": "Fund Management Platform v5.0.0",
+        "portfolio": "Portfolio",
+        "selectPortfolio": "Select Account",
+        "addPortfolio": "Add Portfolio",
+        "font": "Font: ",
+        "newPortfolioTitle": "Add New Portfolio",
+        "accountName": "Account Name",
+        "accountNamePlaceholder": "e.g. Mom's Retirement, Friend A",
+        "createSuccess": "Portfolio creation successful!",
+        "creating": "Creating...",
+        "confirmCreate": "Confirm",
+        "themeLight": "Switch to Light Mode",
+        "themeDark": "Switch to Dark Mode",
+        "fontTitle": "Adjust Font Size"
+    },
+    "errors": {
+        "forbidden": "Insufficient permissions to perform this action.",
+        "createFailed": "Creation Failed"
+    }
+}

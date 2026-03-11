@@ -44,7 +44,7 @@ def list_portfolios(
 
 @router.get("/all", response_model=list[PortfolioOut], summary="[ADMIN] List all portfolios")
 def list_all_portfolios(
-    admin: UserSession = Depends(RequireRole("ADMIN")),
+    admin: UserSession = Depends(RequireRole("ADMIN", "USER")),
     db: Session = Depends(get_db),
 ):
     """管理員專用：取得系統所有 Portfolios（跨使用者）。需要 ADMIN 角色。"""

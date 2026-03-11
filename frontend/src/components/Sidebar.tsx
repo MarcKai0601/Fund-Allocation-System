@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
     LayoutDashboard, BookOpen, ArrowLeftRight, TrendingUp,
-    Sun, Moon, ALargeSmall, Menu, X, Plus, ChevronDown,
+    Sun, Moon, ALargeSmall, Menu, X, Plus, ChevronDown, Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
+import { useTranslation } from "react-i18next";
 import { useEffect, useState, useCallback } from "react";
 import { usePortfolioStore, PortfolioInfo } from "@/lib/portfolio-store";
 import { useAuthStore } from "@/lib/auth-store";
@@ -18,11 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-const nav = [
-    { href: "/", label: "總覽 Dashboard", icon: LayoutDashboard },
-    { href: "/funds", label: "資金管理", icon: BookOpen },
-    { href: "/trades", label: "交易紀錄", icon: ArrowLeftRight },
-];
+// Navigation array will be dynamically initialized inside the component using useTranslation hook
+// Remove static nav array here
 
 type FontSize = "md" | "lg" | "xl";
 const fontLabels: Record<FontSize, string> = { md: "A", lg: "A+", xl: "A++" };
@@ -41,6 +39,13 @@ export default function Sidebar() {
     const token = useAuthStore((s) => s.token);
     const setToken = useAuthStore((s) => s.setToken);
     const { portfolios, activePortfolioId, setPortfolios, setActive } = usePortfolioStore();
+
+    const { t, i18n } = useTranslation();
+    const nav = [
+        { href: "/", label: t("nav.dashboard"), icon: LayoutDashboard },
+        { href: "/funds", label: t("nav.funds"), icon: BookOpen },
+        { href: "/trades", label: t("nav.trades"), icon: ArrowLeftRight },
+    ];
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -95,12 +100,12 @@ export default function Sidebar() {
         setCreating(true);
         try {
             await portfoliosApi.create({ name: newName.trim() });
-            toast.success("代操帳戶建立成功！");
+            toast.success(t("sidebar.createSuccess"));
             setCreateOpen(false);
             setNewName("");
             fetchPortfolios();
         } catch (e: any) {
-            toast.error(getErrorMsg(e, "建立失敗"));
+            toast.error(getErrorMsg(e, t("errors.createFailed")));
         } finally {
             setCreating(false);
         }
@@ -111,7 +116,7 @@ export default function Sidebar() {
 
     const portfolioSwitcher = (
         <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--sidebar-border)" }}>
-            <p className="text-xs mb-1.5 font-medium" style={{ color: "var(--sidebar-text)" }}>代操帳戶</p>
+            <p className="text-xs mb-1.5 font-medium" style={{ color: "var(--sidebar-text)" }}>{t("sidebar.portfolio")}</p>
             <div className="relative">
                 <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -122,7 +127,7 @@ export default function Sidebar() {
                         borderColor: "var(--sidebar-border)",
                     }}
                 >
-                    <span className="truncate">{activePortfolio?.name ?? "選擇帳戶"}</span>
+                    <span className="truncate">{activePortfolio?.name ?? t("sidebar.selectPortfolio")}</span>
                     <ChevronDown className={cn("w-4 h-4 shrink-0 transition-transform", dropdownOpen && "rotate-180")} />
                 </button>
                 {dropdownOpen && (
@@ -155,7 +160,7 @@ export default function Sidebar() {
                             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}
                         >
                             <Plus className="w-3.5 h-3.5" />
-                            新增代操帳戶
+                            {t("sidebar.addPortfolio")}
                         </button>
                     </div>
                 )}
@@ -171,8 +176,8 @@ export default function Sidebar() {
                     <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                    <p className="font-bold text-sm leading-tight" style={{ color: "var(--sidebar-hover-text)" }}>代操系統</p>
-                    <p className="text-xs" style={{ color: "var(--sidebar-text)" }}>Fund Allocation</p>
+                    <p className="font-bold text-sm leading-tight" style={{ color: "var(--sidebar-hover-text)" }}>{t("sidebar.title")}</p>
+                    <p className="text-xs" style={{ color: "var(--sidebar-text)" }}>{t("sidebar.subtitle")}</p>
                 </div>
                 <button
                     className="ml-auto md:hidden p-1 rounded-lg transition-colors"
@@ -225,24 +230,38 @@ export default function Sidebar() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={cycleFontSize}
-                        title="調整字體大小"
+                        title={t("sidebar.fontTitle")}
                         className={cn("flex items-center gap-1.5 flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors", "border")}
                         style={{ backgroundColor: "var(--sidebar-hover-bg)", color: "var(--sidebar-text)", borderColor: "var(--sidebar-border)" }}
                     >
                         <ALargeSmall className="w-3.5 h-3.5 shrink-0" />
-                        字體：{mounted ? fontLabels[fontSize] : "A"}
+                        {t("sidebar.font")}{mounted ? fontLabels[fontSize] : "A"}
                     </button>
                     <button
                         onClick={() => setTheme(isDark ? "light" : "dark")}
-                        title={mounted ? (isDark ? "切換淺色模式" : "切換深色模式") : "切換主題"}
+                        title={mounted ? (isDark ? t("sidebar.themeLight") : t("sidebar.themeDark")) : "Toggle Theme"}
                         className="p-2 rounded-lg transition-colors border"
                         style={{ backgroundColor: "var(--sidebar-hover-bg)", color: "var(--sidebar-text)", borderColor: "var(--sidebar-border)" }}
                     >
                         {mounted ? (isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />) : <Sun className="w-4 h-4" />}
                     </button>
                 </div>
+                <div className="relative flex items-center w-full">
+                    <Globe className="w-4 h-4 absolute left-2" style={{ color: "var(--sidebar-text)" }} />
+                    <select
+                        value={i18n.language || "zh-TW"}
+                        onChange={(e) => i18n.changeLanguage(e.target.value)}
+                        className="w-full p-1.5 pl-8 rounded-lg transition-colors border text-xs appearance-none outline-none cursor-pointer"
+                        style={{ backgroundColor: "var(--sidebar-hover-bg)", color: "var(--sidebar-text)", borderColor: "var(--sidebar-border)" }}
+                    >
+                        <option value="zh-TW">繁體中文</option>
+                        <option value="en">English</option>
+                        <option value="ja">日本語</option>
+                        <option value="ko">한국어</option>
+                    </select>
+                </div>
                 <p className="text-xs" style={{ color: "var(--sidebar-text)", opacity: 0.6 }}>
-                    台股代操管理平台 v5.0.0
+                    {t("sidebar.version")}
                 </p>
             </div>
         </>
@@ -262,7 +281,7 @@ export default function Sidebar() {
                     <TrendingUp className="w-4 h-4 text-white" />
                 </div>
                 <p className="font-bold text-sm truncate" style={{ color: "var(--sidebar-hover-text)" }}>
-                    {activePortfolio?.name ?? "代操系統"}
+                    {activePortfolio?.name ?? t("sidebar.title")}
                 </p>
             </div>
 
@@ -285,24 +304,23 @@ export default function Sidebar() {
                 {sidebarContent}
             </aside>
 
-            {/* Create portfolio modal */}
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>
                 <DialogContent style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
                     <DialogHeader>
-                        <DialogTitle style={{ color: "var(--body-text)" }}>新增代操帳戶</DialogTitle>
+                        <DialogTitle style={{ color: "var(--body-text)" }}>{t("sidebar.newPortfolioTitle")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 mt-2">
                         <div className="space-y-2">
-                            <Label style={{ color: "var(--sidebar-text)" }}>帳戶名稱</Label>
+                            <Label style={{ color: "var(--sidebar-text)" }}>{t("sidebar.accountName")}</Label>
                             <Input
-                                placeholder="例：媽媽退休金、朋友A代操"
+                                placeholder={t("sidebar.accountNamePlaceholder")}
                                 value={newName}
                                 onChange={(e) => setNewName(e.target.value)}
                                 style={{ backgroundColor: "var(--input-bg)", borderColor: "var(--input-border)", color: "var(--body-text)" }}
                             />
                         </div>
                         <Button onClick={handleCreate} disabled={creating} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                            {creating ? "建立中..." : "確認建立"}
+                            {creating ? t("sidebar.creating") : t("sidebar.confirmCreate")}
                         </Button>
                     </div>
                 </DialogContent>

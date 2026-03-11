@@ -1,0 +1,29 @@
+{
+    "nav": {
+        "dashboard": "總覽 Dashboard",
+        "funds": "資金管理",
+        "trades": "交易紀錄"
+    },
+    "sidebar": {
+        "title": "代操系統",
+        "subtitle": "Fund Allocation",
+        "version": "台股代操管理平台 v5.0.0",
+        "portfolio": "代操帳戶",
+        "selectPortfolio": "選擇帳戶",
+        "addPortfolio": "新增代操帳戶",
+        "font": "字體：",
+        "newPortfolioTitle": "新增代操帳戶",
+        "accountName": "帳戶名稱",
+        "accountNamePlaceholder": "例：媽媽退休金、朋友A代操",
+        "createSuccess": "代操帳戶建立成功！",
+        "creating": "建立中...",
+        "confirmCreate": "確認建立",
+        "themeLight": "切換淺色模式",
+        "themeDark": "切換深色模式",
+        "fontTitle": "調整字體大小"
+    },
+    "errors": {
+        "forbidden": "權限不足，無法執行此操作",
+        "createFailed": "建立失敗"
+    }
+}

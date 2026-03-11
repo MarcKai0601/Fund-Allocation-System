@@ -6,6 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import TokenCatcher from "@/components/TokenCatcher";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import I18nProvider from "@/components/I18nProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,16 +25,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem={false}
           disableTransitionOnChange={false}
         >
-          <Suspense fallback={null}>
-            <TokenCatcher />
-          </Suspense>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 p-4 md:p-8 overflow-auto pt-16 md:pt-8">
-              {children}
-            </main>
-          </div>
-          <Toaster />
+          <I18nProvider>
+            <Suspense fallback={null}>
+              <TokenCatcher />
+            </Suspense>
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <main className="flex-1 p-4 md:p-8 overflow-auto pt-16 md:pt-8">
+                {children}
+              </main>
+            </div>
+            <Toaster />
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>
