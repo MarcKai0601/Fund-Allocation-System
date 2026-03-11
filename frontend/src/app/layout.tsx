@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import TokenCatcher from "@/components/TokenCatcher";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
@@ -22,6 +24,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem={false}
           disableTransitionOnChange={false}
         >
+          <Suspense fallback={null}>
+            <TokenCatcher />
+          </Suspense>
           <div className="flex min-h-screen">
             <Sidebar />
             <main className="flex-1 p-4 md:p-8 overflow-auto pt-16 md:pt-8">

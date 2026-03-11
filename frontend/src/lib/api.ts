@@ -22,6 +22,12 @@ api.interceptors.response.use(
     const status = err?.response?.status;
     if (status === 401) {
       useAuthStore.getState().logout();
+      // 重導向到 SSO 登入頁，並附帶 redirect 參數
+      if (typeof window !== "undefined") {
+        const ssoLoginUrl =
+          process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5174/login";
+        window.location.href = `${ssoLoginUrl}?redirect=${encodeURIComponent(window.location.href)}`;
+      }
     }
     return Promise.reject(err);
   }

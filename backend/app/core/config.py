@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     FUGLE_API_KEY_QUOTE: str = ""
     ALLOWED_ORIGINS: str = "http://localhost:3000"
     AUTH_TOKEN_TTL: int = 86400
+    SLIDING_WINDOW_TTL: int = 1800    # 每次 API 呼叫自動延長 30 分鐘
 
     class Config:
         env_file = ".env"
