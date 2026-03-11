@@ -275,7 +275,15 @@ export default function Sidebar() {
                 </p>
                 <button
                     onClick={() => {
+<<<<<<< HEAD
                         useAuthStore.getState().logout();
+=======
+                        // 1. 重新開啟初始化遮罩，避免 AppContent 的 useEffect 攔截跳轉
+                        useAuthStore.setState({ isInitializing: true });
+                        // 2. 清除本地狀態
+                        useAuthStore.getState().logout();
+                        // 3. 執行乾淨的跳轉，不帶 redirect 參數
+>>>>>>> test
                         window.location.href = process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5174/login";
                     }}
                     className="flex w-full items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors mt-2 hover:bg-red-500/10 hover:text-red-400"

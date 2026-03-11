@@ -27,5 +27,128 @@
     "errors": {
         "forbidden": "이 작업을 수행할 권한이 없습니다.",
         "createFailed": "생성 실패"
+    },
+    "dashboard": {
+        "emptyState": {
+            "title": "자금이 초기화되지 않았습니다",
+            "description": "'자금 관리'에서 초기 운용 금액을 설정해 주세요"
+        },
+        "investedAmount": "투자 금액",
+        "availableAmount": "사용 가능 자금",
+        "investedCost": "보유 비용",
+        "unrealizedPnl": "미실현 손익",
+        "realizedPnl": "실현 손익",
+        "selectAccount": "계좌를 선택하거나 추가해 주세요",
+        "selectAccountDesc": "왼쪽 메뉴에서 계좌를 선택하거나 새로 추가하세요",
+        "title": "대시보드 개요",
+        "subtitle": "실시간 손익 추적 | 60초마다 자동 업데이트",
+        "lastUpdated": "최근 업데이트: ",
+        "holdings": "보유 주식",
+        "emptyHoldings": "현재 보유 중인 항목이 없습니다",
+        "table": {
+            "inventory": "재고",
+            "currentPrice": "현재가",
+            "avgCost": "평균 단가",
+            "change": "등락",
+            "marketValue": "시장 가치",
+            "pnl": "손익",
+            "stock": "주식",
+            "shares": "보유 수량(주)",
+            "cost": "평균 단가",
+            "todayChange": "금일 등락",
+            "unrealizedPnl": "미실현 손익",
+            "roi": "수익률(ROI)"
+        }
+    },
+    "funds": {
+        "title": "자금 관리",
+        "subtitle": "대리 운용 자금 입금 및 변동 내역 관리",
+        "setInitialFund": "초기 자금 설정",
+        "addFund": "자금 추가",
+        "investedAmount": "투자 금액",
+        "availableAmount": "사용 가능 자금",
+        "transactionHistory": "자금 변동 내역",
+        "emptyHistory": "자금 내역이 없습니다",
+        "selectAccount": "운용 계좌를 선택해 주세요",
+        "initFundTitle": "초기 운용 자금 설정",
+        "depositFundTitle": "자금 추가 (입금)",
+        "amount": "금액 (TWD)",
+        "date": "날짜",
+        "note": "비고",
+        "notePlaceholder": "선택 사항",
+        "initWarning": "초기 자금 설정 후에는 수정할 수 없습니다. 향후 입금 시 '자금 추가'를 이용해 주세요.",
+        "confirmInit": "설정 확인",
+        "confirmDeposit": "입금 확인",
+        "type": {
+            "init": "초기 자금",
+            "deposit": "입금",
+            "withdraw": "출금"
+        },
+        "table": {
+            "type": "유형",
+            "amount": "금액",
+            "date": "날짜",
+            "note": "비고",
+            "createdAt": "생성 시간"
+        },
+        "toast": {
+            "initSuccess": "초기 자금 설정 완료!",
+            "initFailed": "설정 실패",
+            "depositSuccess": "입금 완료!",
+            "depositFailed": "입금 실패"
+        }
+    },
+    "trades": {
+        "title": "거래 기록",
+        "subtitle": "각 매매 작업 기록 및 손익 계산",
+        "addTrade": "새 거래",
+        "addTradeTitle": "새 거래 추가",
+        "selectAccount": "운용 계좌를 선택해 주세요",
+        "searchStock": "주식 코드 / 이름",
+        "searchPlaceholder": "주식 검색, 예: TSMC 또는 2330",
+        "currentHoldings": "현재 보유: ",
+        "shares": " 주",
+        "sellAll": "전부 매도",
+        "action": "매매 방향",
+        "buy": "매수 BUY",
+        "sell": "매도 SELL",
+        "price": "체결 가격",
+        "fetchingQuote": "호가 가져오는 중…",
+        "liveQuote": "✦ 실시간 시세",
+        "quantity": "수량 (주)",
+        "tradeDate": "거래 날짜",
+        "brokerFee": "증권사 수수료 (0.1425%×60%)",
+        "tax": "거래세 (0.3%)",
+        "totalFee": "총 수수료",
+        "note": "비고",
+        "notePlaceholder": "선택 사항",
+        "expectedCost": "예상 비용: ",
+        "expectedReturn": "예상 회수 금액: ",
+        "confirmBuy": "매수 확인",
+        "confirmSell": "매도 확인",
+        "filterPlaceholder": "주식 코드 필터링...",
+        "recordCount": "{{count}} 개의 기록",
+        "emptyRecords": "거래 기록이 없습니다",
+        "table": {
+            "id": "#ID",
+            "stock": "주식",
+            "action": "방향",
+            "price": "체결가",
+            "shares": "주식 수",
+            "fee": "수수료",
+            "totalAmount": "총 금액",
+            "realizedPnl": "실현 손익",
+            "roi": "수익률",
+            "date": "날짜",
+            "buyAction": "매수",
+            "sellAction": "매도"
+        },
+        "toast": {
+            "noQuote": "실시간 시세를 가져올 수 없습니다. 직접 입력해 주세요.",
+            "missingFields": "필수 입력란을 채워 주세요",
+            "buySuccess": "매수 거래가 추가되었습니다!",
+            "sellSuccess": "매도 거래가 추가되었습니다!",
+            "tradeFailed": "거래 실패"
+        }
     }
 }

@@ -27,5 +27,128 @@
     "errors": {
         "forbidden": "この操作を実行する権限がありません",
         "createFailed": "作成失敗"
+    },
+    "dashboard": {
+        "emptyState": {
+            "title": "資金が初期化されていません",
+            "description": "「資金管理」で初期運用金額を設定してください"
+        },
+        "investedAmount": "投資金額",
+        "availableAmount": "利用可能資金",
+        "investedCost": "保有コスト",
+        "unrealizedPnl": "未実現損益",
+        "realizedPnl": "実現損益",
+        "selectAccount": "口座を選択または作成してください",
+        "selectAccountDesc": "左側のメニューから口座を選択するか、新しく追加してください",
+        "title": "ダッシュボード",
+        "subtitle": "リアルタイム損益追跡｜60秒ごとに自動更新",
+        "lastUpdated": "最終更新：",
+        "holdings": "保有銘柄",
+        "emptyHoldings": "現在保有している銘柄はありません",
+        "table": {
+            "inventory": "在庫",
+            "currentPrice": "現在値",
+            "avgCost": "平均単価",
+            "change": "前日比",
+            "marketValue": "時価評価額",
+            "pnl": "損益",
+            "stock": "銘柄",
+            "shares": "保有株数",
+            "cost": "平均取得単価",
+            "todayChange": "本日の値動き",
+            "unrealizedPnl": "含み損益",
+            "roi": "投資収益率（ROI）"
+        }
+    },
+    "funds": {
+        "title": "資金管理",
+        "subtitle": "入金および取引履歴の管理",
+        "setInitialFund": "初期資金の設定",
+        "addFund": "資金の追加",
+        "investedAmount": "投資金額",
+        "availableAmount": "利用可能資金",
+        "transactionHistory": "資金移動履歴",
+        "emptyHistory": "資金履歴がありません",
+        "selectAccount": "口座を選択してください",
+        "initFundTitle": "初期運用資金の設定",
+        "depositFundTitle": "資金の追加（入金）",
+        "amount": "金額 (TWD)",
+        "date": "日付",
+        "note": "備考",
+        "notePlaceholder": "任意",
+        "initWarning": "初期資金は設定後に変更できません。その後の入金は「資金の追加」をご利用ください。",
+        "confirmInit": "設定を確認",
+        "confirmDeposit": "入金を確認",
+        "type": {
+            "init": "初期資金",
+            "deposit": "入金",
+            "withdraw": "出金"
+        },
+        "table": {
+            "type": "種類",
+            "amount": "金額",
+            "date": "日付",
+            "note": "備考",
+            "createdAt": "作成日時"
+        },
+        "toast": {
+            "initSuccess": "初期資金が設定されました！",
+            "initFailed": "設定に失敗しました",
+            "depositSuccess": "入金が完了しました！",
+            "depositFailed": "入金に失敗しました"
+        }
+    },
+    "trades": {
+        "title": "取引履歴",
+        "subtitle": "各売買操作の記録と損益計算",
+        "addTrade": "新規取引",
+        "addTradeTitle": "新規取引の追加",
+        "selectAccount": "口座を選択してください",
+        "searchStock": "銘柄コード / 銘柄名",
+        "searchPlaceholder": "銘柄を検索 (例: TSMC または 2330)",
+        "currentHoldings": "現在の保有：",
+        "shares": " 株",
+        "sellAll": "全売却",
+        "action": "売買方向",
+        "buy": "買付 BUY",
+        "sell": "売却 SELL",
+        "price": "約定価格",
+        "fetchingQuote": "気配値を取得中…",
+        "liveQuote": "✦ リアルタイム株価",
+        "quantity": "数量（株）",
+        "tradeDate": "取引日",
+        "brokerFee": "委託手数料 (0.1425%×60%)",
+        "tax": "取引税 (0.3%)",
+        "totalFee": "合計手数料",
+        "note": "備考",
+        "notePlaceholder": "任意",
+        "expectedCost": "予想費用：",
+        "expectedReturn": "予想受渡金額：",
+        "confirmBuy": "買付を確認",
+        "confirmSell": "売却を確認",
+        "filterPlaceholder": "銘柄コードで絞り込み...",
+        "recordCount": "{{count}} 件の記録",
+        "emptyRecords": "取引履歴がありません",
+        "table": {
+            "id": "#ID",
+            "stock": "銘柄",
+            "action": "方向",
+            "price": "約定価格",
+            "shares": "株数",
+            "fee": "手数料",
+            "totalAmount": "合計金額",
+            "realizedPnl": "実現損益",
+            "roi": "投資収益率",
+            "date": "日付",
+            "buyAction": "買付",
+            "sellAction": "売却"
+        },
+        "toast": {
+            "noQuote": "リアルタイム株価を取得できません。手動で入力してください。",
+            "missingFields": "必須項目を入力してください",
+            "buySuccess": "買付取引を追加しました！",
+            "sellSuccess": "売却取引を追加しました！",
+            "tradeFailed": "取引の追加に失敗しました"
+        }
     }
 }
