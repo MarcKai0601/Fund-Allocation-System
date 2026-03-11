@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, TrendingUp, TrendingDown, DollarSign, Wallet, BarChart3, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const [data, setData] = useState<PortfolioOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -41,28 +43,28 @@ export default function DashboardPage() {
 
   const stats = [
     {
-      label: "投入資金",
+      label: t('dashboard.investedAmount'),
       value: fmt.currency(pf?.total_deposited),
       icon: DollarSign,
       color: "text-sky-400",
       bg: "bg-sky-400/10",
     },
     {
-      label: "可用資金",
+      label: t('dashboard.availableAmount'),
       value: fmt.currency(pf?.available_funds),
       icon: Wallet,
       color: "text-emerald-400",
       bg: "bg-emerald-400/10",
     },
     {
-      label: "持倉成本",
+      label: t('dashboard.investedCost'),
       value: fmt.currency(pf?.total_invested),
       icon: BarChart3,
       color: "text-violet-400",
       bg: "bg-violet-400/10",
     },
     {
-      label: "未實現損益",
+      label: t('dashboard.unrealizedPnl'),
       value: fmt.currency(data?.total_unrealized_pnl),
       sub: data?.total_unrealized_pnl != null ? fmt.pct((data.total_unrealized_pnl / (pf?.total_invested ?? 1)) * 100) : undefined,
       icon: Activity,
@@ -72,7 +74,7 @@ export default function DashboardPage() {
         (data?.total_unrealized_pnl ?? 0) >= 0 ? "bg-emerald-400/10" : "bg-red-400/10",
     },
     {
-      label: "已實現損益",
+      label: t('dashboard.realizedPnl'),
       value: fmt.currency(pf?.realized_pnl),
       sub: pf?.realized_pnl != null && pf?.total_deposited
         ? fmt.pct((pf.realized_pnl / pf.total_deposited) * 100)
@@ -97,8 +99,8 @@ export default function DashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <Wallet className="w-16 h-16" style={{ color: "var(--sidebar-text)" }} />
-        <h2 className="text-xl font-semibold" style={{ color: "var(--body-text)" }}>請選擇或建立代操帳戶</h2>
-        <p style={{ color: "var(--sidebar-text)" }}>從左側選單選擇帳戶或新增帳戶</p>
+        <h2 className="text-xl font-semibold" style={{ color: "var(--body-text)" }}>{t('dashboard.selectAccount')}</h2>
+        <p style={{ color: "var(--sidebar-text)" }}>{t('dashboard.selectAccountDesc')}</p>
       </div>
     );
   }
@@ -107,8 +109,8 @@ export default function DashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <Wallet className="w-16 h-16" style={{ color: "var(--sidebar-text)" }} />
-        <h2 className="text-xl font-semibold" style={{ color: "var(--body-text)" }}>尚未初始化資金</h2>
-        <p style={{ color: "var(--sidebar-text)" }}>請前往「資金管理」設定初始代操金額</p>
+        <h2 className="text-xl font-semibold" style={{ color: "var(--body-text)" }}>{t('dashboard.emptyState.title')}</h2>
+        <p style={{ color: "var(--sidebar-text)" }}>{t('dashboard.emptyState.description')}</p>
       </div>
     );
   }
@@ -117,14 +119,14 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "var(--body-text)" }}>總覽 Dashboard</h1>
+          <h1 className="text-xl md:text-2xl font-bold" style={{ color: "var(--body-text)" }}>{t('dashboard.title')}</h1>
           <p className="text-sm mt-1" style={{ color: "var(--sidebar-text)" }}>
-            即時損益追蹤｜每 60 秒自動更新
+            {t('dashboard.subtitle')}
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-3 text-xs" style={{ color: "var(--sidebar-text)" }}>
           <RefreshCw className="w-3 h-3" />
-          上次更新：{mounted && lastUpdated ? lastUpdated.toTimeString().slice(0, 8) : "—"}
+          {t('dashboard.lastUpdated')}{mounted && lastUpdated ? lastUpdated.toTimeString().slice(0, 8) : "—"}
         </div>
       </div>
 
@@ -150,12 +152,12 @@ export default function DashboardPage() {
       <Card style={{ backgroundColor: "var(--card-bg)", borderColor: "var(--card-border)" }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm md:text-base font-semibold" style={{ color: "var(--body-text)" }}>
-            持股庫存
+            {t('dashboard.holdings')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {data?.positions.length === 0 ? (
-            <p className="text-sm py-8 text-center" style={{ color: "var(--sidebar-text)" }}>目前無持倉</p>
+            <p className="text-sm py-8 text-center" style={{ color: "var(--sidebar-text)" }}>{t('dashboard.emptyHoldings')}</p>
           ) : (
             <>
               {/* Mobile card layout */}
@@ -175,12 +177,12 @@ export default function DashboardPage() {
                         </Badge>
                       </div>
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>庫存</span><span style={{ color: "var(--body-text)" }}>{p.quantity.toLocaleString()} 股</span></div>
-                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>現價</span><span className="font-medium" style={{ color: "var(--body-text)" }}>{p.current_price != null ? fmt.currency(p.current_price) : "—"}</span></div>
-                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>均價</span><span style={{ color: "var(--body-text)" }}>{fmt.currency(p.avg_cost)}</span></div>
-                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>漲跌</span><span className={cn("font-medium", changePositive ? "text-emerald-400" : "text-red-400")}>{fmt.pct(p.change_pct)}</span></div>
-                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>市值</span><span style={{ color: "var(--body-text)" }}>{fmt.currency(p.market_value)}</span></div>
-                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>損益</span><span className={cn("font-semibold", pnlPositive ? "text-emerald-400" : "text-red-400")}>{fmt.currency(p.unrealized_pnl)}</span></div>
+                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>{t('dashboard.table.inventory')}</span><span style={{ color: "var(--body-text)" }}>{p.quantity.toLocaleString()} {t('trades.shares', { defaultValue: '股' })}</span></div>
+                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>{t('dashboard.table.currentPrice')}</span><span className="font-medium" style={{ color: "var(--body-text)" }}>{p.current_price != null ? fmt.currency(p.current_price) : "—"}</span></div>
+                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>{t('dashboard.table.avgCost')}</span><span style={{ color: "var(--body-text)" }}>{fmt.currency(p.avg_cost)}</span></div>
+                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>{t('dashboard.table.change')}</span><span className={cn("font-medium", changePositive ? "text-emerald-400" : "text-red-400")}>{fmt.pct(p.change_pct)}</span></div>
+                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>{t('dashboard.table.marketValue')}</span><span style={{ color: "var(--body-text)" }}>{fmt.currency(p.market_value)}</span></div>
+                        <div className="flex justify-between"><span style={{ color: "var(--sidebar-text)" }}>{t('dashboard.table.pnl')}</span><span className={cn("font-semibold", pnlPositive ? "text-emerald-400" : "text-red-400")}>{fmt.currency(p.unrealized_pnl)}</span></div>
                       </div>
                     </div>
                   );
@@ -192,7 +194,7 @@ export default function DashboardPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ borderBottom: "1px solid var(--card-border)" }}>
-                      {["股票", "庫存(股)", "平均成本", "現價", "今日漲跌", "市值", "未實現損益", "報酬率"].map((h, i) => (
+                      {[t('dashboard.table.stock'), t('dashboard.table.shares'), t('dashboard.table.cost'), t('dashboard.table.currentPrice'), t('dashboard.table.todayChange'), t('dashboard.table.marketValue'), t('dashboard.table.unrealizedPnl'), t('dashboard.table.roi')].map((h, i) => (
                         <th key={h} className={cn("pb-3 font-medium text-xs", i === 0 ? "text-left" : "text-right")} style={{ color: "var(--sidebar-text)" }}>{h}</th>
                       ))}
                     </tr>
