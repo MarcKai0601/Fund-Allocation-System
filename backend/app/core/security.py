@@ -32,13 +32,19 @@ class UserSession(BaseModel):
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ) -> dict:
-    """從 Redis 驗證 Token，並延長壽命 (滑動視窗)，回傳原始 Session 字典"""
+    """從 Redis 驗證 Token，並延長壽命 (滑動視窗)"""
     token = credentials.credentials
+    
+    # 💡 加上這兩行印出日誌，讓你清楚看到前端傳了什麼過來！
+    masked_token = f"{token[:10]}...{token[-5:]}" if len(token) > 15 else token
+    logger.info(f"🕵️ [Auth Debug] 收到請求 Token: {masked_token}")
+
     r = get_redis()
     raw = r.get(f"{TOKEN_PREFIX}{token}")
 
     if not raw:
-        logger.warning("Token validation failed: token not found in Redis")
+        # 💡 印出失敗的具體原因
+        logger.error(f"🚨 [Auth Debug] Token 驗證失敗！Redis 中找不到此 Token: {token}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
@@ -75,15 +81,24 @@ def get_current_user_session(session: dict = Depends(get_current_user)) -> UserS
     """將 Java 回傳的複雜角色結構，扁平化提取出屬於 FAS 的角色"""
     user_id = str(session.get("userId") or session.get("UserId"))
     username = session.get("username") or session.get("Username")
-    raw_roles = session.get("roles") or session.get("Roles") or []
+    
+    # 嘗試抓取各種可能的權限欄位 (相容真實環境與 Dev 模擬環境)
+    raw_roles = session.get("roles") or session.get("Roles") or session.get("role_codes") or []
     
     fas_roles = []
-    # 解析新結構: [{"systemCode": "FAS", "roleCode": "USER"}, ...]
-    for role in raw_roles:
-        if isinstance(role, dict) and role.get("systemCode") == "FAS":
-            fas_roles.append(role.get("roleCode"))
-        elif isinstance(role, str): # 容錯: 如果還是舊的純字串陣列
-            fas_roles.append(role)
+    
+    if isinstance(raw_roles, list):
+        # 情況 A: 新結構 [{"systemCode": "FAS", "roleCode": "USER"}] 或 純字串 ["ADMIN"]
+        for role in raw_roles:
+            if isinstance(role, dict) and role.get("systemCode") == "FAS":
+                fas_roles.append(role.get("roleCode"))
+            elif isinstance(role, str):
+                fas_roles.append(role)
+                
+    elif isinstance(raw_roles, dict):
+        # 情況 B: 舊結構或 dev_auth 模擬資料 {"FAS": ["ADMIN"]}
+        if "FAS" in raw_roles and isinstance(raw_roles["FAS"], list):
+            fas_roles.extend(raw_roles["FAS"])
 
     language = session.get("language") or session.get("Language") or "zh-TW"
 

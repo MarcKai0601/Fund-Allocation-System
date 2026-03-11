@@ -174,15 +174,6 @@ export const authApi = {
   getMe: () => api.get<UserProfile>("/api/auth/me"),
 };
 
-// ─── Dev Auth (模擬 Java MGR SSO 登入) ────────────────────────────────────────
-
-export const devApi = {
-  login: (userId = 1) =>
-    api.post<{ token: string; user_id: number; roles: Record<string, string[]>; language: string; ttl: number }>(
-      "/api/dev/login", { user_id: userId, language: i18n.language || "zh-TW" }
-    ),
-};
-
 // ─── Formatters ──────────────────────────────────────────────────────────────
 
 export const fmt = {

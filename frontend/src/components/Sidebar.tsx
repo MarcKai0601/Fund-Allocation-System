@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useState, useCallback } from "react";
 import { usePortfolioStore, PortfolioInfo } from "@/lib/portfolio-store";
 import { useAuthStore } from "@/lib/auth-store";
-import { portfoliosApi, devApi, getErrorMsg } from "@/lib/api";
+import { portfoliosApi, getErrorMsg } from "@/lib/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -64,17 +64,6 @@ export default function Sidebar() {
         else { document.body.style.overflow = ""; }
         return () => { document.body.style.overflow = ""; };
     }, [mobileOpen]);
-
-    // DEV auto-login: 尚無 Token 時自動呼叫 dev/login 取得測試 Token
-    useEffect(() => {
-        if (token) return;
-        devApi.login().then((res) => {
-            setToken(res.data.token);
-            console.log("[DEV] Auto-login OK:", res.data.user_id);
-        }).catch(() => {
-            console.warn("[DEV] Auto-login failed — backend may not be running");
-        });
-    }, [token, setToken]);
 
     // Fetch portfolios when token is available
     const fetchPortfolios = useCallback(async () => {

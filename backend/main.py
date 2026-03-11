@@ -10,7 +10,7 @@ from app.core.middleware import RequestLoggingMiddleware
 
 from app.models import portfolio, fund_ledger, stock_master, transaction, position, fifo_lot  # noqa
 
-from app.api import portfolios, stocks, dev_auth, auth
+from app.api import portfolios, stocks, auth
 from app.tasks.stock_sync import sync_stock_master, should_sync
 from app.core.config import settings
 
@@ -53,7 +53,6 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(portfolios.router)
 app.include_router(stocks.router)
-app.include_router(dev_auth.router)  # DEV ONLY — 生產環境移除
 
 
 @app.get("/", tags=["Health"])

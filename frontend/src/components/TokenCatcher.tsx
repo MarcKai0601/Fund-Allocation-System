@@ -23,12 +23,17 @@ export default function TokenCatcher() {
 
     useEffect(() => {
         const token = searchParams.get("token");
-        if (!token) return;
+        const { setInitializing } = useAuthStore.getState();
+
+        if (!token) {
+            setInitializing(false);
+            return;
+        }
 
         const syncSession = async () => {
             try {
                 // 將 Token 存入 Zustand store，這會讓 interceptor 自動夾帶
-                useAuthStore.getState().login(token);
+                useAuthStore.getState().setToken(token);
 
                 // 呼叫 API 取得使用者完整資料（包含 SSO 的預設語系）
                 const res = await authApi.getMe();
@@ -43,6 +48,8 @@ export default function TokenCatcher() {
                 router.replace(pathname);
             } catch (err) {
                 console.error("Failed to sync SSO session:", err);
+            } finally {
+                setInitializing(false);
             }
         };
 

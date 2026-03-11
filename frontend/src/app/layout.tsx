@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import TokenCatcher from "@/components/TokenCatcher";
+import AppContent from "@/components/AppContent";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import I18nProvider from "@/components/I18nProvider";
@@ -29,12 +30,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Suspense fallback={null}>
               <TokenCatcher />
             </Suspense>
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <main className="flex-1 p-4 md:p-8 overflow-auto pt-16 md:pt-8">
-                {children}
-              </main>
-            </div>
+            <AppContent>
+              <div className="flex min-h-screen">
+                <Sidebar />
+                <main className="flex-1 p-4 md:p-8 overflow-auto pt-16 md:pt-8">
+                  {children}
+                </main>
+              </div>
+            </AppContent>
             <Toaster />
           </I18nProvider>
         </ThemeProvider>
