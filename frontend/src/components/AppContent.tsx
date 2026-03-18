@@ -23,7 +23,7 @@ export default function AppContent({ children }: { children: React.ReactNode }) 
     useEffect(() => {
         if (!isInitializing && !token && mounted) {
             const ssoLoginUrl =
-                process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5174/login";
+                process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5173/login";
             window.location.replace(ssoLoginUrl);
         }
     }, [isInitializing, token, mounted]);

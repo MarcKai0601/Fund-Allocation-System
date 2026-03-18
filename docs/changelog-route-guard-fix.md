@@ -15,7 +15,7 @@
 ### 2. 新增防禦性重定向 (Force Redirect)
 - **變更說明**: 
   - 加入了新的 `useEffect` 監聽器。
-  - 當系統已非初始化中 (`!isInitializing`) 且 **完全沒有 Token (`!token`)** 的狀態下，系統會立即發動跳轉返回 SSO（預設 `:5174/login`），並附帶當前網址為 `redirect` 參數。
+  - 當系統已非初始化中 (`!isInitializing`) 且 **完全沒有 Token (`!token`)** 的狀態下，系統會立即發動跳轉返回 SSO（預設 `:5173/login`），並附帶當前網址為 `redirect` 參數。
   - **細節防護**：呼叫的是 `window.location.replace()`。這表示當前的網址歷史紀錄將直接被新的 SSO 網址覆寫。此設計能有效防止返回上一頁無限在無權限系統登入處「鬼打牆」回不去的情況。
 
 ### 3. 完全封鎖未授權渲染

@@ -19,7 +19,7 @@
 - **修改檔案**: `frontend/src/lib/api.ts`
 - **變更說明**:
   重新改寫 `api.interceptors.response.use` 的錯誤處理邏輯。
-  - **HTTP 401**: 清除 Zustand 中的 `token` 並重新導向至 SSO 登入頁（指定於 Port `5174`），並附帶了 `redirect` 參數。
+  - **HTTP 401**: 清除 Zustand 中的 `token` 並重新導向至 SSO 登入頁（指定於 Port `5173`），並附帶了 `redirect` 參數。
   - **HTTP 403**: 取消了原本可能會被統一拋轉而造成的 403 登出死迴圈問題。現在當遇到 403 錯誤時，系統 **不會進行頁面跳轉**，而是直接彈出 Toast 顯示 `i18n.t("errors.forbidden")`（權限不足），並拒絕（Reject）該 API Promise，保持畫面停留與穩定。
 
 ---

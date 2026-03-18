@@ -79,13 +79,13 @@
    useAuthStore.getState().logout();
 +  if (typeof window !== "undefined") {
 +    const ssoLoginUrl =
-+      process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5174/login";
++      process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5173/login";
 +    window.location.href = `${ssoLoginUrl}?redirect=${encodeURIComponent(window.location.href)}`;
 +  }
  }
 ```
 
-> SSO 登入 URL 可透過環境變數 `NEXT_PUBLIC_SSO_LOGIN_URL` 覆寫，預設為 `http://localhost:5174/login`。
+> SSO 登入 URL 可透過環境變數 `NEXT_PUBLIC_SSO_LOGIN_URL` 覆寫，預設為 `http://localhost:5173/login`。
 
 ---
 
