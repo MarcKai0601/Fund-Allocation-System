@@ -13,6 +13,7 @@ from app.models import portfolio, fund_ledger, stock_master, transaction, positi
 from app.api import portfolios, stocks, auth
 from app.tasks.stock_sync import sync_stock_master, should_sync
 from app.core.config import settings
+from app.core.version import get_full_version, RELEASE_DATE
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Fund Allocation System API",
     description="Multi-portfolio fund management",
-    version="5.0.0",
+    version=get_full_version(),
     lifespan=lifespan,
 )
 
@@ -57,5 +58,10 @@ app.include_router(stocks.router)
 
 @app.get("/", tags=["Health"])
 def health():
-    return {"status": "ok", "service": "Fund Allocation System", "version": "5.0.0"}
+    return {"status": "ok", "service": "Fund Allocation System", "version": get_full_version()}
 
+
+@app.get("/api/system/version", tags=["System"])
+def get_version():
+    """Return backend system version."""
+    return {"version": get_full_version(), "release_date": RELEASE_DATE}

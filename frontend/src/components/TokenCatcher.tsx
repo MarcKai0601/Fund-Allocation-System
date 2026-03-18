@@ -9,11 +9,12 @@ import { useTranslation } from "react-i18next";
 /**
  * TokenCatcher — 全域 Token 攔截元件
  *
- * 從 URL query string 攔截 SSO 回傳的 `?token=xxx`，
- * 存入 Zustand auth store，並即時請求 /api/auth/me 來同步語系偏好，
- * 最後清除網址上的 token 參數。
+ * 職責：
+ * 1. 若 URL 帶有 `?token=xxx`：存入 store → 呼叫 /api/auth/me → 清除 URL 參數。
+ * 2. 若 URL 無 token 但 store 已有 token：呼叫 /api/auth/me 驗證是否仍有效。
+ * 3. 若 store 完全無 token 且 URL 也無 token：直接放行（交由 AppContent Route Guard 處理跳轉）。
  *
- * 需用 <Suspense> 包裹（因為 useSearchParams 需要 Suspense boundary）。
+ * 最終呼叫 setInitializing(false) 開閘。
  */
 export default function TokenCatcher() {
     const searchParams = useSearchParams();
@@ -22,39 +23,57 @@ export default function TokenCatcher() {
     const { i18n } = useTranslation();
 
     useEffect(() => {
-        const token = searchParams.get("token");
-        const { setInitializing } = useAuthStore.getState();
+        const urlToken = searchParams.get("token");
+        const { setInitializing, setToken, setUser } = useAuthStore.getState();
+        const existingToken = useAuthStore.getState().token;
 
-        if (!token) {
-            setInitializing(false);
+        // Case 1: URL 帶有新 Token（SSO 跳轉回來）
+        if (urlToken) {
+            const syncSession = async () => {
+                try {
+                    setToken(urlToken);
+                    const res = await authApi.getMe();
+                    setUser(res.data);
+                    if (res.data.language) {
+                        i18n.changeLanguage(res.data.language);
+                    }
+                    router.replace(pathname);
+                } catch (err) {
+                    console.error("Failed to sync SSO session:", err);
+                    // Token 無效，清除並讓 Route Guard 處理跳轉
+                    useAuthStore.getState().logout();
+                } finally {
+                    setInitializing(false);
+                }
+            };
+            syncSession();
             return;
         }
 
-        const syncSession = async () => {
-            try {
-                // 將 Token 存入 Zustand store，這會讓 interceptor 自動夾帶
-                useAuthStore.getState().setToken(token);
-
-                // 呼叫 API 取得使用者完整資料（包含 SSO 的預設語系）
-                const res = await authApi.getMe();
-                useAuthStore.getState().setUser(res.data);
-
-                // 自動切換 i18n 語系
-                if (res.data.language) {
-                    i18n.changeLanguage(res.data.language);
+        // Case 2: 沒有 URL Token，但 store 有舊 Token → 驗證是否仍有效
+        if (existingToken) {
+            const revalidate = async () => {
+                try {
+                    const res = await authApi.getMe();
+                    setUser(res.data);
+                    if (res.data.language) {
+                        i18n.changeLanguage(res.data.language);
+                    }
+                } catch {
+                    // Token 過期或失效，Axios 攔截器已處理 401 跳轉
+                    // 此處不需額外處理
+                } finally {
+                    setInitializing(false);
                 }
+            };
+            revalidate();
+            return;
+        }
 
-                // 清除 URL 上的 token 參數，避免外洩
-                router.replace(pathname);
-            } catch (err) {
-                console.error("Failed to sync SSO session:", err);
-            } finally {
-                setInitializing(false);
-            }
-        };
-
-        syncSession();
+        // Case 3: 完全無 Token → 直接放行，交給 AppContent Route Guard
+        setInitializing(false);
     }, [searchParams, router, pathname, i18n]);
 
     return null;
 }
+
