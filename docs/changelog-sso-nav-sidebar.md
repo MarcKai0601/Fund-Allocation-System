@@ -19,5 +19,5 @@
 - **變更說明**:
   - 引入了 `LogOut` lucide 圖標。
   - 在最底端控制台（版本號文字下方）新增了滿版登出按鈕。
-  - 實作防護邊界：透過 `useAuthStore.setState({ isInitializing: true })` 主動掛起畫面遮罩，宣告狀態變更中，避免觸發 Route Guard 的無窮迴圈 `redirect` 參數污染。隨後 `logout()` 徹底清除用戶狀態並使用 `window.location.href` 原生跳轉回 SSO 登入頁（`:5174/login`），確保網址乾淨。
+  - 實作防護邊界：透過 `useAuthStore.setState({ isInitializing: true })` 主動掛起畫面遮罩，宣告狀態變更中，避免觸發 Route Guard 的無窮迴圈 `redirect` 參數污染。隨後 `logout()` 徹底清除用戶狀態並使用 `window.location.href` 原生跳轉回 SSO 登入頁（`:5173/login`），確保網址乾淨。
   - 添加了支援紅色警示感知的 tailwind 樣式。
