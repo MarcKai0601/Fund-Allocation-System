@@ -24,12 +24,12 @@ api.interceptors.response.use(
   (err) => {
     const status = err?.response?.status;
     if (status === 401) {
+      // 先擋住 Route Guard，避免跳轉登入頁時被加上 ?redirect=
+      useAuthStore.setState({ isInitializing: true });
       useAuthStore.getState().logout();
-      // 重導向到 SSO 登入頁 (Port 5174)，並附帶 redirect 參數
       if (typeof window !== "undefined") {
-        const ssoLoginUrl =
-          process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5174/login";
-        window.location.href = `${ssoLoginUrl}?redirect=${encodeURIComponent(window.location.href)}`;
+        window.location.href =
+          process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5173/login";
       }
     } else if (status === 403) {
       // 權限不足，顯示 Toast 而不要跳轉，避免死迴圈
@@ -172,6 +172,10 @@ export interface UserProfile {
 
 export const authApi = {
   getMe: () => api.get<UserProfile>("/api/auth/me"),
+};
+
+export const systemApi = {
+  getVersion: () => api.get<{ version: string; release_date?: string }>("/api/system/version"),
 };
 
 // ─── Formatters ──────────────────────────────────────────────────────────────

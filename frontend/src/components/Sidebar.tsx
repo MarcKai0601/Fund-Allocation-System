@@ -13,7 +13,8 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useState, useCallback } from "react";
 import { usePortfolioStore, PortfolioInfo } from "@/lib/portfolio-store";
 import { useAuthStore } from "@/lib/auth-store";
-import { portfoliosApi, getErrorMsg } from "@/lib/api";
+import { portfoliosApi, getErrorMsg, systemApi } from "@/lib/api";
+import { APP_VERSION, RELEASE_DATE as FE_RELEASE_DATE } from "@/lib/version";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,9 +34,10 @@ export default function Sidebar() {
     const [fontSize, setFontSize] = useState<FontSize>("md");
     const [mobileOpen, setMobileOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [createOpen, setCreateOpen] = useState(false);
     const [newName, setNewName] = useState("");
     const [creating, setCreating] = useState(false);
+    const [createOpen, setCreateOpen] = useState(false);
+    const [beVersion, setBeVersion] = useState<{ version: string; release_date?: string } | null>(null);
 
     const token = useAuthStore((s) => s.token);
     const setToken = useAuthStore((s) => s.setToken);
@@ -75,7 +77,15 @@ export default function Sidebar() {
         } catch { /* ignore */ }
     }, [token, setPortfolios]);
 
-    useEffect(() => { fetchPortfolios(); }, [fetchPortfolios]);
+    const fetchSystemVersion = useCallback(async () => {
+        if (!token) return;
+        try {
+            const res = await systemApi.getVersion();
+            setBeVersion(res.data);
+        } catch { /* ignore */ }
+    }, [token]);
+
+    useEffect(() => { fetchPortfolios(); fetchSystemVersion(); }, [fetchPortfolios, fetchSystemVersion]);
 
     const cycleFontSize = () => {
         const order: FontSize[] = ["md", "lg", "xl"];
@@ -181,7 +191,7 @@ export default function Sidebar() {
             {/* App Launcher */}
             <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--sidebar-border)" }}>
                 <button
-                    onClick={() => window.location.href = process.env.NEXT_PUBLIC_SSO_WELCOME_URL || "http://localhost:5174/welcome"}
+                    onClick={() => window.location.href = process.env.NEXT_PUBLIC_SSO_WELCOME_URL || "http://localhost:5173/welcome"}
                     className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
                     style={{ color: "var(--sidebar-text)" }}
                     onMouseEnter={(e) => {
@@ -270,9 +280,15 @@ export default function Sidebar() {
                         <option value="ko">한국어</option>
                     </select>
                 </div>
-                <p className="text-xs" style={{ color: "var(--sidebar-text)", opacity: 0.6 }}>
-                    {t("sidebar.version")}
-                </p>
+                <div className="flex justify-center text-[10px] space-x-1" style={{ color: "var(--sidebar-text)" }}>
+                    <span>WEB {APP_VERSION}</span>
+                    {beVersion && (
+                        <>
+                            <span>•</span>
+                            <span>CORE {beVersion.version}</span>
+                        </>
+                    )}
+                </div>
                 <button
                     onClick={() => {
                         // 1. 重新開啟初始化遮罩，避免 AppContent 的 useEffect 攔截跳轉
@@ -280,7 +296,7 @@ export default function Sidebar() {
                         // 2. 清除本地狀態
                         useAuthStore.getState().logout();
                         // 3. 執行乾淨的跳轉，不帶 redirect 參數
-                        window.location.href = process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5174/login";
+                        window.location.href = process.env.NEXT_PUBLIC_SSO_LOGIN_URL || "http://localhost:5173/login";
                     }}
                     className="flex w-full items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors mt-2 hover:bg-red-500/10 hover:text-red-400"
                     style={{ color: "var(--sidebar-text)" }}
