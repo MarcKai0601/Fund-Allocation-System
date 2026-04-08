@@ -1,9 +1,9 @@
 # 使用輕量級的 Python 3.11 作為基底
 FROM python:3.11-slim
 
-# 安裝 Tailscale 與必要系統工具
+# 安裝 Tailscale 與必要系統工具 (已修正括號錯誤)
 RUN apt-get update && apt-get install -y curl gnupg && \
-    curl -fsSL [https://tailscale.com/install.sh](https://tailscale.com/install.sh) | sh && \
+    curl -fsSL https://tailscale.com/install.sh | sh && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 設定工作目錄
