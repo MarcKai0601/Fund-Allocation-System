@@ -1,8 +1,8 @@
 # 使用輕量級的 Python 3.11 作為基底
 FROM python:3.11-slim
 
-# 安裝 Tailscale 與必要系統工具 (已修正括號錯誤)
-RUN apt-get update && apt-get install -y curl gnupg && \
+# 安裝 Tailscale、socat 與必要系統工具
+RUN apt-get update && apt-get install -y curl gnupg socat && \
     curl -fsSL https://tailscale.com/install.sh | sh && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
