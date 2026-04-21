@@ -2,7 +2,7 @@
 FROM python:3.11-slim
 
 # 安裝 Tailscale、proxychains4 與必要系統工具
-RUN apt-get update && apt-get install -y curl gnupg proxychains4 && \
+RUN apt-get update && apt-get install -y curl gnupg socat && \
     curl -fsSL https://tailscale.com/install.sh | sh && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
