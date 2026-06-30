@@ -11,6 +11,7 @@ from app.core.redis_client import get_redis
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.portfolio import Portfolio
+from app.services.rbac_service import is_system_admin, get_user_portfolio_role
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +148,7 @@ class RequireRole:
         return user_session
 
 
-# ── Dependency 5: Portfolio 所有權驗證 (BOLA/IDOR 防護) ────────────────────────
+# ── Dependency 5: Portfolio 所有權驗證 (BOLA/IDOR 防護，保留以供相容) ──────────
 def get_valid_portfolio(
     pid: int,
     user_id: int = Depends(require_fas_access),
@@ -160,3 +161,65 @@ def get_valid_portfolio(
     if portfolio.owner_user_id != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     return portfolio
+
+
+# ── Dependency 6: FAS 內部 RBAC — 要求 SYSTEM_ADMIN ─────────────────────────
+def require_system_admin(
+    user_session: UserSession = Depends(get_current_user_session),
+    db: Session = Depends(get_db),
+) -> UserSession:
+    """FAS 內部 RBAC：要求系統層級的 SYSTEM_ADMIN 角色。"""
+    if not user_session.roles:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No FAS access")
+    if not is_system_admin(user_session.user_id, db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="SYSTEM_ADMIN role required",
+        )
+    return user_session
+
+
+# ── Dependency 7: FAS 內部 RBAC — Portfolio 存取控制 ─────────────────────────
+def get_portfolio_access(*allowed_roles: str):
+    """
+    Factory: 回傳一個 Depends，驗證 user 對指定 portfolio 有足夠的 FAS 內部角色。
+    優先順序：SYSTEM_ADMIN bypass → FAS portfolio role → legacy owner fallback。
+    """
+    def _dep(
+        pid: int,
+        user_session: UserSession = Depends(get_current_user_session),
+        db: Session = Depends(get_db),
+    ) -> Portfolio:
+        if not user_session.roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No FAS access")
+
+        uid = user_session.user_id
+
+        # 1. SYSTEM_ADMIN 一律放行
+        if is_system_admin(uid, db):
+            portfolio = db.query(Portfolio).filter(Portfolio.id == pid).first()
+            if not portfolio:
+                raise HTTPException(status_code=404, detail="Portfolio not found")
+            return portfolio
+
+        # 2. 查詢 FAS portfolio-level 角色
+        role = get_user_portfolio_role(uid, pid, db)
+        if role and role in allowed_roles:
+            portfolio = db.query(Portfolio).filter(Portfolio.id == pid).first()
+            if not portfolio:
+                raise HTTPException(status_code=404, detail="Portfolio not found")
+            return portfolio
+
+        # 3. Legacy fallback：portfolio owner 視為 PORTFOLIO_MANAGER
+        portfolio = db.query(Portfolio).filter(Portfolio.id == pid).first()
+        if not portfolio:
+            raise HTTPException(status_code=404, detail="Portfolio not found")
+        if portfolio.owner_user_id == uid and "PORTFOLIO_MANAGER" in allowed_roles:
+            return portfolio
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+
+    return _dep

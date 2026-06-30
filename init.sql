@@ -138,6 +138,43 @@ CREATE TABLE IF NOT EXISTS fifo_lots (
   COMMENT='FIFO 買入批次庫存';
 
 -- ============================================================
+-- 7. fas_roles
+--    FAS 內部角色定義
+-- ============================================================
+CREATE TABLE IF NOT EXISTS fas_roles (
+    id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    code        VARCHAR(50)   NOT NULL UNIQUE COMMENT 'SYSTEM_ADMIN / PORTFOLIO_MANAGER / TRADER / ANALYST',
+    name        VARCHAR(100)  NOT NULL,
+    created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='FAS 內部角色定義';
+
+INSERT IGNORE INTO fas_roles (code, name) VALUES
+('SYSTEM_ADMIN',      '系統管理員'),
+('PORTFOLIO_MANAGER', '投資組合管理員'),
+('TRADER',            '交易員'),
+('ANALYST',           '分析師');
+
+-- ============================================================
+-- 8. fas_user_roles
+--    使用者角色指派（可綁定至特定 portfolio 或系統層級）
+-- ============================================================
+CREATE TABLE IF NOT EXISTS fas_user_roles (
+    id           INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    user_id      VARCHAR(64)   NOT NULL COMMENT '外部 SSO user_id',
+    role_id      INT UNSIGNED  NOT NULL COMMENT '對應 fas_roles.id',
+    portfolio_id INT UNSIGNED  NULL     COMMENT 'NULL = 系統層級',
+    granted_by   VARCHAR(64)   NULL,
+    created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_user_role_portfolio (user_id, role_id, portfolio_id),
+    INDEX idx_fas_ur_user      (user_id),
+    INDEX idx_fas_ur_portfolio (portfolio_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='使用者角色指派';
+
+-- ============================================================
 -- 完成
 -- ============================================================
-SELECT 'fund_allocation V4 database initialized successfully.' AS status;
+SELECT 'fund_allocation V5 database initialized successfully.' AS status;

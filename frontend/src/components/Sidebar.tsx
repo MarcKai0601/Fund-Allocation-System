@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
     LayoutDashboard, BookOpen, ArrowLeftRight, TrendingUp,
     Sun, Moon, ALargeSmall, Menu, X, Plus, ChevronDown, Globe,
-    Grid3x3, LogOut
+    Grid3x3, LogOut, ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -40,7 +40,9 @@ export default function Sidebar() {
     const [beVersion, setBeVersion] = useState<{ version: string; release_date?: string } | null>(null);
 
     const token = useAuthStore((s) => s.token);
+    const user = useAuthStore((s) => s.user);
     const setToken = useAuthStore((s) => s.setToken);
+    const isSystemAdmin = user?.fas_roles?.includes("SYSTEM_ADMIN") ?? false;
     const { portfolios, activePortfolioId, setPortfolios, setActive } = usePortfolioStore();
 
     const { t, i18n } = useTranslation();
@@ -243,6 +245,32 @@ export default function Sidebar() {
                         </Link>
                     );
                 })}
+                {isSystemAdmin && (
+                    <Link
+                        href="/admin/rbac"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
+                        style={{
+                            backgroundColor: pathname === "/admin/rbac" ? "var(--sidebar-active-bg)" : "transparent",
+                            color: pathname === "/admin/rbac" ? "var(--sidebar-active-text)" : "var(--sidebar-text)",
+                            fontWeight: pathname === "/admin/rbac" ? 500 : 400,
+                        }}
+                        onMouseEnter={e => {
+                            if (pathname !== "/admin/rbac") {
+                                (e.currentTarget as HTMLElement).style.backgroundColor = "var(--sidebar-hover-bg)";
+                                (e.currentTarget as HTMLElement).style.color = "var(--sidebar-hover-text)";
+                            }
+                        }}
+                        onMouseLeave={e => {
+                            if (pathname !== "/admin/rbac") {
+                                (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                                (e.currentTarget as HTMLElement).style.color = "var(--sidebar-text)";
+                            }
+                        }}
+                    >
+                        <ShieldCheck className="w-4 h-4 shrink-0" />
+                        {t("nav.rbac")}
+                    </Link>
+                )}
             </nav>
 
             {/* Controls */}

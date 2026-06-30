@@ -2,7 +2,8 @@
     "nav": {
         "dashboard": "ダッシュボード",
         "funds": "資金管理",
-        "trades": "取引履歴"
+        "trades": "取引履歴",
+        "rbac": "ロール管理"
     },
     "sidebar": {
         "title": "運用システム",

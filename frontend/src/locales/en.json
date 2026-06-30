@@ -2,7 +2,8 @@
     "nav": {
         "dashboard": "Dashboard",
         "funds": "Funds Management",
-        "trades": "Trade Records"
+        "trades": "Trade Records",
+        "rbac": "Role Management"
     },
     "sidebar": {
         "title": "Trading System",

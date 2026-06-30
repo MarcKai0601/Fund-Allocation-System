@@ -168,6 +168,7 @@ export interface UserProfile {
   username: string | null;
   roles: string[];
   language: string;
+  fas_roles: string[];  // FAS 內部系統層級角色（如 SYSTEM_ADMIN）
 }
 
 export const authApi = {
@@ -176,6 +177,44 @@ export const authApi = {
 
 export const systemApi = {
   getVersion: () => api.get<{ version: string; release_date?: string }>("/api/system/version"),
+};
+
+// ─── RBAC Types ──────────────────────────────────────────────────────────────
+
+export interface FasRole {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface RoleAssignment {
+  id: number;
+  user_id: string;
+  role_code: string;
+  role_name: string;
+  portfolio_id: number | null;
+  granted_by: string | null;
+  created_at: string | null;
+}
+
+export interface GrantRoleRequest {
+  role_code: string;
+  portfolio_id?: number | null;
+}
+
+// ─── RBAC API calls ──────────────────────────────────────────────────────────
+
+export const rbacApi = {
+  listRoles: () => api.get<FasRole[]>("/api/rbac/roles"),
+  listAssignments: () => api.get<RoleAssignment[]>("/api/rbac/assignments"),
+  getUserRoles: (userId: string) =>
+    api.get<RoleAssignment[]>(`/api/rbac/users/${encodeURIComponent(userId)}/roles`),
+  grantRole: (userId: string, data: GrantRoleRequest) =>
+    api.post<RoleAssignment>(`/api/rbac/users/${encodeURIComponent(userId)}/roles`, data),
+  revokeRole: (userId: string, assignmentId: number) =>
+    api.delete(`/api/rbac/users/${encodeURIComponent(userId)}/roles/${assignmentId}`),
+  getPortfolioMembers: (pid: number) =>
+    api.get<RoleAssignment[]>(`/api/rbac/portfolios/${pid}/members`),
 };
 
 // ─── Formatters ──────────────────────────────────────────────────────────────

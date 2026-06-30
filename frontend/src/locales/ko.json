@@ -2,7 +2,8 @@
     "nav": {
         "dashboard": "대시보드",
         "funds": "자금 관리",
-        "trades": "거래 내역"
+        "trades": "거래 내역",
+        "rbac": "역할 관리"
     },
     "sidebar": {
         "title": "운용 시스템",

@@ -40,7 +40,7 @@ def set_auth_token(
         # 新格式 (camelCase) — RBAC 新機制使用
         "userId": user_id,
         "username": username,
-        "roles": [{"roleCode": rc} for rc in role_codes],
+        "roles": [{"systemCode": "FAS", "roleCode": rc} for rc in role_codes],
         "language": language,
     }
     r.setex(f"token:{token}", ttl, json.dumps(session_data))

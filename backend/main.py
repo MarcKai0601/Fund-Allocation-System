@@ -10,9 +10,11 @@ from app.core.database import Base
 from app.core.middleware import RequestLoggingMiddleware
 
 from app.models import portfolio, fund_ledger, stock_master, transaction, position, fifo_lot  # noqa
+from app.models import fas_role, fas_user_role  # noqa — ensure RBAC tables are created
 
-from app.api import portfolios, stocks, auth
+from app.api import portfolios, stocks, auth, rbac
 from app.tasks.stock_sync import sync_stock_master, should_sync
+from app.services.rbac_service import seed_roles, ensure_system_admin
 from app.core.config import settings
 from app.core.version import get_full_version, RELEASE_DATE
 
@@ -23,6 +25,19 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables verified.")
+
+    # RBAC 初始化
+    db = SessionLocal()
+    try:
+        seed_roles(db)
+        if settings.INITIAL_ADMIN_USER_IDS:
+            for uid in settings.INITIAL_ADMIN_USER_IDS.split(","):
+                uid = uid.strip()
+                if uid:
+                    ensure_system_admin(uid, db)
+                    logger.info("Ensured SYSTEM_ADMIN for user_id=%s", uid)
+    finally:
+        db.close()
 
     # 1. 快速判斷是否需要同步 (不阻擋)
     db = SessionLocal()
@@ -61,6 +76,12 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(portfolios.router)
 app.include_router(stocks.router)
+app.include_router(rbac.router)
+
+if settings.DEV_MODE_ENABLED:
+    logger.warning("⚠️  DEV MODE ENABLED — /api/dev/* 路由已掛載，請勿在正式環境使用！")
+    from app.api.dev import router as dev_router
+    app.include_router(dev_router)
 
 
 @app.get("/", tags=["Health"])

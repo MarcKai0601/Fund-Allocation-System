@@ -80,6 +80,21 @@ npm run dev
 
 ---
 
+## 開發模式（Dev Mode Bypass）
+
+本系統認證依賴外部 SSO；開發時可在 `backend/.env` 設定：
+
+```
+DEV_MODE_ENABLED=true
+DEV_SECRET=your-local-secret
+```
+
+啟用後可透過 `POST /api/dev/login` 直接建立 Session Token，跳過 SSO 流程。詳細操作步驟請見 [backend/README.md](backend/README.md#開發模式dev-mode-bypass)。
+
+> ⚠️ 正式環境務必保持 `DEV_MODE_ENABLED=false`。
+
+---
+
 ## 核心 API
 
 | 方法 | 路徑 | 說明 |

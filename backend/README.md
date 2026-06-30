@@ -98,6 +98,121 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ---
 
+## 開發模式（Dev Mode Bypass）
+
+本系統的認證完全依賴外部 SSO；開發或管理作業時可啟用 **Dev Mode**，直接在後端建立 Session Token，跳過 SSO 流程。
+
+> ⚠️ **警告：正式環境絕對不可開啟 Dev Mode。** 啟用後任何人只要知道 `DEV_SECRET` 即可以任意身份登入。
+
+### 1. 啟用 Dev Mode
+
+在 `backend/.env` 加入：
+
+```
+DEV_MODE_ENABLED=true
+DEV_SECRET=your-local-secret
+FRONTEND_URL=http://localhost:3000
+```
+
+重啟後端後，Swagger 文件（http://localhost:8000/docs）會出現 **Dev (開發模式)** 分類的路由，終端機也會顯示警告訊息。
+
+---
+
+### 2. 瀏覽器一鍵登入（最常用）
+
+直接在瀏覽器網址列輸入以下 URL，後端會自動建立 Token 並 302 跳轉到前端完成登入，**無需任何手動操作**：
+
+```
+http://localhost:8000/api/dev/redirect?dev_secret=your-local-secret&user_id=1&username=kai&roles=ADMIN
+```
+
+| 參數 | 說明 | 必填 |
+|------|------|------|
+| `dev_secret` | 與 `.env` 的 `DEV_SECRET` 相同 | 是 |
+| `user_id` | 登入身份的 user ID | 是 |
+| `username` | 顯示名稱 | 否 |
+| `roles` | FAS 角色，逗號分隔；可填 `ADMIN`、`USER` | 否，預設 `USER` |
+| `language` | 介面語言，如 `zh-TW`、`en` | 否，預設 `zh-TW` |
+
+> 可以把常用的 URL **存成書籤**，例如分別建立 ADMIN / USER 兩個書籤快速切換身份。
+
+**運作流程：**
+
+```
+瀏覽器開啟 /api/dev/redirect?...
+    ↓ 後端建立 Redis Session，寫入 token
+302 → http://localhost:3000/?token=<uuid>
+    ↓ 前端 TokenCatcher 讀取 ?token
+    ↓ 呼叫 /api/auth/me 驗證
+    ↓ 存入 Zustand（localStorage）
+    ↓ URL 自動清除 token 參數
+已登入，進入 Dashboard
+```
+
+---
+
+### 3. 程式 / curl 取得 Token
+
+若需要在腳本或 CI 中使用：
+
+```bash
+curl -X POST http://localhost:8000/api/dev/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dev_secret": "your-local-secret",
+    "user_id": "1",
+    "username": "kai",
+    "roles": ["ADMIN"],
+    "language": "zh-TW"
+  }'
+```
+
+回應範例：
+
+```json
+{
+  "token": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "user_id": "1",
+  "username": "kai",
+  "roles": ["ADMIN"],
+  "expires_in": 1800
+}
+```
+
+Token 有效期預設 1800 秒，每次呼叫 API 都會自動延長（sliding window）。
+
+---
+
+### 4. 在 Swagger / curl 使用 Token
+
+將取得的 Token 放入 `Authorization` header：
+
+```bash
+curl http://localhost:8000/api/auth/me \
+  -H "Authorization: Bearer xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+```
+
+或在 Swagger UI 右上角點擊 **Authorize**，填入 `Bearer <token>`。
+
+---
+
+### 4. 撤銷 Token
+
+```bash
+curl -X DELETE "http://localhost:8000/api/dev/logout?dev_secret=your-local-secret" \
+  -H "Authorization: Bearer xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+```
+
+Token 會立即從 Redis 刪除，後續請求將收到 401。
+
+---
+
+### 5. 關閉 Dev Mode
+
+將 `.env` 中的 `DEV_MODE_ENABLED` 改回 `false`（或直接移除），重啟後端。`/api/dev/*` 路由將完全不掛載，Swagger 也不會顯示。
+
+---
+
 ## 商業邏輯說明
 
 ### 買入 (BUY)

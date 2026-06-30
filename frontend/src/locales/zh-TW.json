@@ -2,7 +2,8 @@
     "nav": {
         "dashboard": "總覽 Dashboard",
         "funds": "資金管理",
-        "trades": "交易紀錄"
+        "trades": "交易紀錄",
+        "rbac": "角色管理"
     },
     "sidebar": {
         "title": "代操系統",
